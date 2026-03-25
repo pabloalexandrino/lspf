@@ -4,16 +4,19 @@ import { LancamentosTable } from '@/components/financeiro/lancamentos-table'
 import { MemberSummary } from '@/components/financeiro/member-summary'
 import { DollarSign } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
+import { redirect } from 'next/navigation'
 
 export default async function FinanceiroPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
   const [
     { data: lancamentosRaw },
     { data: members },
     { data: sessoes },
   ] = await Promise.all([
-    supabase.from('lancamentos').select('*').order('created_at', { ascending: false }),
+    supabase.from('lancamentos').select('*').order('created_at', { ascending: false }).limit(500),
     supabase.from('members').select('*').order('nome'),
     supabase.from('sessoes').select('*').order('data', { ascending: false }),
   ])

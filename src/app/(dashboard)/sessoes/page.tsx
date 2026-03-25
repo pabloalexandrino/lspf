@@ -1,9 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { SessoesTable } from '@/components/sessoes/sessoes-table'
 import { Calendar } from 'lucide-react'
+import { redirect } from 'next/navigation'
 
 export default async function SessoesPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
   const { data: sessoes } = await supabase
     .from('sessoes')
     .select('*')

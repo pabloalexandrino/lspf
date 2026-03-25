@@ -45,33 +45,37 @@ export async function gerarLancamentos(sessaoId: string) {
       // Divide among ágape members
       const agapeMembers = presencasAgape ?? []
       if (agapeMembers.length > 0) {
-        const valorPorPessoa = Math.round((custoExtra / agapeMembers.length) * 100) / 100
-        for (const p of agapeMembers) {
+        const baseValue = Math.floor((custoExtra / agapeMembers.length) * 100) / 100
+        const remainder = Math.round((custoExtra - baseValue * agapeMembers.length) * 100) / 100
+        agapeMembers.forEach((p, index) => {
+          const valor = index === agapeMembers.length - 1 ? baseValue + remainder : baseValue
           lancamentos.push({
             sessao_id: sessaoId,
             member_id: p.member_id,
             tipo: 'agape',
             descricao: sessao.custo_extra_descricao || 'Ágape',
-            valor: valorPorPessoa,
+            valor: Math.round(valor * 100) / 100,
             pago: false,
           })
-        }
+        })
       }
     } else {
       // Divide among all session presentes
       const sessionMembers = presencasSessao ?? []
       if (sessionMembers.length > 0) {
-        const valorPorPessoa = Math.round((custoExtra / sessionMembers.length) * 100) / 100
-        for (const p of sessionMembers) {
+        const baseValue = Math.floor((custoExtra / sessionMembers.length) * 100) / 100
+        const remainder = Math.round((custoExtra - baseValue * sessionMembers.length) * 100) / 100
+        sessionMembers.forEach((p, index) => {
+          const valor = index === sessionMembers.length - 1 ? baseValue + remainder : baseValue
           lancamentos.push({
             sessao_id: sessaoId,
             member_id: p.member_id,
             tipo: 'sessao',
             descricao: sessao.custo_extra_descricao || 'Custo da sessão',
-            valor: valorPorPessoa,
+            valor: Math.round(valor * 100) / 100,
             pago: false,
           })
-        }
+        })
       }
     }
   }
@@ -129,6 +133,8 @@ export async function marcarPagoLote(lancamentoIds: string[], pago: boolean) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autorizado' }
+
+  if (lancamentoIds.length === 0) return { success: true }
 
   const { error } = await supabase
     .from('lancamentos')

@@ -20,9 +20,12 @@ export async function TopDebtors() {
   // Group by member and sum
   const byMember = data.reduce<Record<string, { nome: string; total: number }>>((acc, l) => {
     const memberId = l.member_id
-    const member = l.members as unknown as { nome: string }
+    const membersData = l.members as { nome: string }[] | { nome: string } | null
+    const memberName = Array.isArray(membersData)
+      ? (membersData[0]?.nome ?? 'Desconhecido')
+      : (membersData?.nome ?? 'Desconhecido')
     if (!acc[memberId]) {
-      acc[memberId] = { nome: member.nome, total: 0 }
+      acc[memberId] = { nome: memberName, total: 0 }
     }
     acc[memberId].total += Number(l.valor)
     return acc

@@ -6,6 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { createClient } from '@/lib/supabase/server'
 import { formatDate } from '@/lib/utils'
 import { LayoutDashboard } from 'lucide-react'
+import { redirect } from 'next/navigation'
 
 async function PresencaChartServer() {
   const supabase = await createClient()
@@ -42,7 +43,11 @@ async function PresencaChartServer() {
   return <PresencaChart data={chartData} />
 }
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
