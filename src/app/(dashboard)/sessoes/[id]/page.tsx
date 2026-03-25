@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { PresencaList } from '@/components/sessoes/presenca-list'
 import { AgapeList } from '@/components/sessoes/agape-list'
 import { ConsumoForm } from '@/components/sessoes/consumo-form'
+import { ResumoFinanceiro } from '@/components/sessoes/resumo-financeiro'
 import { Calendar, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 
@@ -24,6 +25,7 @@ export default async function SessaoDetailPage({
     { data: presencasAgape },
     { data: produtos },
     { data: consumosRaw },
+    { data: lancamentosRaw },
   ] = await Promise.all([
     supabase.from('sessoes').select('*').eq('id', id).single(),
     supabase.from('members').select('*').order('nome'),
@@ -31,6 +33,7 @@ export default async function SessaoDetailPage({
     supabase.from('presenca_agape').select('*').eq('sessao_id', id),
     supabase.from('produtos').select('*').order('nome'),
     supabase.from('consumo_produtos').select('*').eq('sessao_id', id),
+    supabase.from('lancamentos').select('*').eq('sessao_id', id),
   ])
 
   if (!sessao) notFound()
@@ -39,6 +42,12 @@ export default async function SessaoDetailPage({
   const consumos = (consumosRaw ?? []).map((c) => ({
     ...c,
     produto: (produtos ?? []).find((p) => p.id === c.produto_id),
+  }))
+
+  // Enrich lancamentos with member data
+  const lancamentos = (lancamentosRaw ?? []).map((l) => ({
+    ...l,
+    member: (members ?? []).find((m) => m.id === l.member_id),
   }))
 
   return (
@@ -65,12 +74,11 @@ export default async function SessaoDetailPage({
       </div>
 
       <Tabs defaultValue="presenca">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="presenca">Presença</TabsTrigger>
-          <TabsTrigger value="agape" disabled={!sessao.tem_agape}>
-            Ágape {!sessao.tem_agape && '(N/A)'}
-          </TabsTrigger>
+          <TabsTrigger value="agape" disabled={!sessao.tem_agape}>Ágape</TabsTrigger>
           <TabsTrigger value="consumo">Consumo</TabsTrigger>
+          <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
         </TabsList>
 
         <TabsContent value="presenca" className="mt-4">
@@ -97,6 +105,17 @@ export default async function SessaoDetailPage({
             produtos={produtos ?? []}
             consumos={consumos}
             presencasSessao={presencasSessao ?? []}
+          />
+        </TabsContent>
+
+        <TabsContent value="financeiro" className="mt-4">
+          <ResumoFinanceiro
+            sessao={sessao}
+            members={members ?? []}
+            presencasSessao={presencasSessao ?? []}
+            presencasAgape={presencasAgape ?? []}
+            consumos={consumos}
+            lancamentos={lancamentos}
           />
         </TabsContent>
       </Tabs>
