@@ -3,10 +3,21 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+async function getBarSabedoriaId(supabase: Awaited<ReturnType<typeof createClient>>): Promise<string | null> {
+  const { data } = await supabase
+    .from('caixas')
+    .select('id')
+    .eq('nome', 'Bar da Sabedoria')
+    .single()
+  return data?.id ?? null
+}
+
 export async function gerarLancamentos(sessaoId: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autorizado' }
+
+  const barId = await getBarSabedoriaId(supabase)
 
   // 1. Delete existing lancamentos for this session
   await supabase.from('lancamentos').delete().eq('sessao_id', sessaoId)
@@ -36,51 +47,54 @@ export async function gerarLancamentos(sessaoId: string) {
     descricao: string
     valor: number
     pago: boolean
+    caixa_id: string | null
   }> = []
 
-  // 3a. Custo extra
-  const custoExtra = Number(sessao.custo_extra) || 0
-  if (custoExtra > 0) {
-    if (sessao.tem_agape) {
-      // Divide among ágape members
-      const agapeMembers = presencasAgape ?? []
-      if (agapeMembers.length > 0) {
-        const baseValue = Math.floor((custoExtra / agapeMembers.length) * 100) / 100
-        const remainder = Math.round((custoExtra - baseValue * agapeMembers.length) * 100) / 100
-        agapeMembers.forEach((p, index) => {
-          const valor = index === agapeMembers.length - 1 ? baseValue + remainder : baseValue
-          lancamentos.push({
-            sessao_id: sessaoId,
-            member_id: p.member_id,
-            tipo: 'agape',
-            descricao: sessao.custo_extra_descricao || 'Ágape',
-            valor: Math.round(valor * 100) / 100,
-            pago: false,
-          })
+  // 3a. Custo da sessão — divide among session presentes
+  const custoSessao = Number(sessao.custo_sessao) || 0
+  if (custoSessao > 0) {
+    const sessionMembers = presencasSessao ?? []
+    if (sessionMembers.length > 0) {
+      const baseValue = Math.floor((custoSessao / sessionMembers.length) * 100) / 100
+      const remainder = Math.round((custoSessao - baseValue * sessionMembers.length) * 100) / 100
+      sessionMembers.forEach((p, index) => {
+        const valor = index === sessionMembers.length - 1 ? baseValue + remainder : baseValue
+        lancamentos.push({
+          sessao_id: sessaoId,
+          member_id: p.member_id,
+          tipo: 'sessao',
+          descricao: 'Bar da Sabedoria',
+          valor: Math.round(valor * 100) / 100,
+          pago: false,
+          caixa_id: barId,
         })
-      }
-    } else {
-      // Divide among all session presentes
-      const sessionMembers = presencasSessao ?? []
-      if (sessionMembers.length > 0) {
-        const baseValue = Math.floor((custoExtra / sessionMembers.length) * 100) / 100
-        const remainder = Math.round((custoExtra - baseValue * sessionMembers.length) * 100) / 100
-        sessionMembers.forEach((p, index) => {
-          const valor = index === sessionMembers.length - 1 ? baseValue + remainder : baseValue
-          lancamentos.push({
-            sessao_id: sessaoId,
-            member_id: p.member_id,
-            tipo: 'sessao',
-            descricao: sessao.custo_extra_descricao || 'Custo da sessão',
-            valor: Math.round(valor * 100) / 100,
-            pago: false,
-          })
-        })
-      }
+      })
     }
   }
 
-  // 3b. Individual product consumptions
+  // 3b. Custo do ágape — divide among ágape presentes
+  const custoAgape = Number(sessao.custo_agape) || 0
+  if (custoAgape > 0) {
+    const agapeMembers = presencasAgape ?? []
+    if (agapeMembers.length > 0) {
+      const baseValue = Math.floor((custoAgape / agapeMembers.length) * 100) / 100
+      const remainder = Math.round((custoAgape - agapeMembers.length * baseValue) * 100) / 100
+      agapeMembers.forEach((p, index) => {
+        const valor = index === agapeMembers.length - 1 ? baseValue + remainder : baseValue
+        lancamentos.push({
+          sessao_id: sessaoId,
+          member_id: p.member_id,
+          tipo: 'agape',
+          descricao: 'Bar da Sabedoria',
+          valor: Math.round(valor * 100) / 100,
+          pago: false,
+          caixa_id: barId,
+        })
+      })
+    }
+  }
+
+  // 3c. Individual product consumptions
   for (const consumo of consumos ?? []) {
     const produto = consumo.produto as { nome: string; preco: number } | null
     if (!produto) continue
@@ -92,6 +106,7 @@ export async function gerarLancamentos(sessaoId: string) {
       descricao: `${produto.nome} (${consumo.quantidade}x)`,
       valor,
       pago: false,
+      caixa_id: barId,
     })
   }
 
@@ -147,6 +162,25 @@ export async function marcarPagoLote(lancamentoIds: string[], pago: boolean) {
   if (error) return { error: error.message }
 
   revalidatePath('/financeiro')
+  revalidatePath('/financeiro/membros')
   revalidatePath('/')
+  return { success: true }
+}
+
+export async function salvarTronco(sessaoId: string, valor: number, observacao: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autorizado' }
+
+  const { error } = await supabase
+    .from('tronco_solidariedade')
+    .upsert(
+      { sessao_id: sessaoId, valor, observacao: observacao || null },
+      { onConflict: 'sessao_id' }
+    )
+
+  if (error) return { error: error.message }
+
+  revalidatePath(`/sessoes/${sessaoId}`)
   return { success: true }
 }
