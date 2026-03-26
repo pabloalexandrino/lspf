@@ -182,5 +182,7 @@ export async function salvarTronco(sessaoId: string, valor: number, observacao: 
   if (error) return { error: error.message }
 
   revalidatePath(`/sessoes/${sessaoId}`)
+  revalidatePath('/financeiro')
+  revalidatePath('/')
   return { success: true }
 }
