@@ -161,12 +161,14 @@ export async function desfazerMensalidadePaga(mensalidadeId: string) {
   if (updateError) return { error: updateError.message }
 
   // Remove the related lancamento (match by member_id + tipo + mes_referencia in descricao)
-  await supabase
+  const { error: deleteError } = await supabase
     .from('lancamentos')
     .delete()
     .eq('member_id', mensalidade.member_id)
     .eq('tipo', 'mensalidade')
     .eq('descricao', `Mensalidade ${mensalidade.mes_referencia.substring(0, 7)}`)
+
+  if (deleteError) return { error: deleteError.message }
 
   revalidatePath('/financeiro/mensalidades')
   revalidatePath('/financeiro/membros')
