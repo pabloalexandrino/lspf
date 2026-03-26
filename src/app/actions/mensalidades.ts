@@ -91,11 +91,11 @@ export async function marcarMensalidadePaga(mensalidadeId: string) {
 }
 
 export async function marcarMensalidadesPagasLote(mensalidadeIds: string[]) {
-  if (mensalidadeIds.length === 0) return { success: true }
-
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autorizado' }
+
+  if (mensalidadeIds.length === 0) return { success: true }
 
   const today = new Date().toISOString().split('T')[0]
   const caixaLojaId = await getCaixaLojaId(supabase)
