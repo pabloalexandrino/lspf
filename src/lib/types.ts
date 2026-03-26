@@ -12,8 +12,10 @@ export type Sessao = {
   id: string
   data: string
   descricao: string | null
-  custo_extra: number
-  custo_extra_descricao: string | null
+  custo_sessao: number
+  custo_sessao_descricao: string | null
+  custo_agape: number
+  custo_agape_descricao: string | null
   tem_agape: boolean
   created_at: string
 }
@@ -50,10 +52,37 @@ export type ConsumoProduto = {
 
 export type Lancamento = {
   id: string
-  sessao_id: string
-  member_id: string
-  tipo: 'sessao' | 'agape' | 'produto'
+  sessao_id: string | null
+  member_id: string | null
+  tipo: 'sessao' | 'agape' | 'produto' | 'mensalidade' | 'oferta' | 'deposito' | 'outro'
   descricao: string | null
+  valor: number
+  pago: boolean
+  data_pagamento: string | null
+  caixa_id: string | null
+  created_at: string
+}
+
+export type Caixa = {
+  id: string
+  nome: string
+  descricao: string | null
+  ativo: boolean
+  created_at: string
+}
+
+export type TroncoSolidariedade = {
+  id: string
+  sessao_id: string
+  valor: number
+  observacao: string | null
+  created_at: string
+}
+
+export type Mensalidade = {
+  id: string
+  member_id: string
+  mes_referencia: string
   valor: number
   pago: boolean
   data_pagamento: string | null
