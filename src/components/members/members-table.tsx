@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { MemberWithCargos, Cargo } from '@/lib/types'
+import { MemberWithCargos, Cargo, LancamentoWithSessao } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import { deleteMember } from '@/app/actions/members'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { MemberForm } from './member-form'
+import { WhatsAppButton } from './whatsapp-button'
 import { MemberDisplay } from './member-display'
 import { CargoBadge } from './cargo-badge'
 import { Pencil, Trash2, UserPlus } from 'lucide-react'
@@ -20,9 +21,10 @@ import { useRouter } from 'next/navigation'
 interface MembersTableProps {
   members: MemberWithCargos[]
   allCargos: Cargo[]
+  lancamentos: LancamentoWithSessao[]
 }
 
-export function MembersTable({ members, allCargos }: MembersTableProps) {
+export function MembersTable({ members, allCargos, lancamentos }: MembersTableProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [filterAtivo, setFilterAtivo] = useState<'all' | 'active' | 'inactive'>('all')
@@ -85,13 +87,14 @@ export function MembersTable({ members, allCargos }: MembersTableProps) {
               <TableHead className="hidden md:table-cell">Cargos</TableHead>
               <TableHead className="hidden sm:table-cell">Nascimento</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>WhatsApp</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   Nenhum membro encontrado
                 </TableCell>
               </TableRow>
@@ -124,6 +127,12 @@ export function MembersTable({ members, allCargos }: MembersTableProps) {
                     <Badge variant={member.ativo ? 'default' : 'secondary'}>
                       {member.ativo ? 'Ativo' : 'Inativo'}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <WhatsAppButton
+                      member={member}
+                      lancamentos={lancamentos.filter((l) => l.member_id === member.id)}
+                    />
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
