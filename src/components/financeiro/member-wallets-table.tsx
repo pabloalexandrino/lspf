@@ -87,8 +87,10 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
                 <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
                   {m.nome_historico ?? '—'}
                 </TableCell>
-                <TableCell className="text-sm text-destructive">
-                  {m.debitoPendente > 0 ? formatCurrency(m.debitoPendente) : '—'}
+                <TableCell className="text-sm">
+                  {m.debitoPendente > 0
+                    ? <span className="text-destructive">{formatCurrency(m.debitoPendente)}</span>
+                    : '—'}
                 </TableCell>
                 <TableCell className="hidden md:table-cell text-sm text-green-500">
                   {formatCurrency(m.totalPago)}

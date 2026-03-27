@@ -8,10 +8,14 @@ export default async function MembrosWalletPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [{ data: members }, { data: lancamentos }] = await Promise.all([
-    supabase.from('members').select('*').eq('ativo', true).order('nome'),
-    supabase.from('lancamentos').select('*').order('created_at', { ascending: false }),
-  ])
+  const { data: members } = await supabase
+    .from('members').select('*').eq('ativo', true).order('nome')
+
+  const memberIds = (members ?? []).map((m) => m.id)
+
+  const { data: lancamentos } = memberIds.length > 0
+    ? await supabase.from('lancamentos').select('*').in('member_id', memberIds).order('created_at', { ascending: false })
+    : { data: [] }
 
   const membersWithLancamentos = (members ?? []).map((m) => ({
     ...m,
