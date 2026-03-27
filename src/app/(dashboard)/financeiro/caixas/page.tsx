@@ -10,7 +10,7 @@ export default async function CaixasPage() {
 
   const [{ data: caixas }, { data: lancamentos }] = await Promise.all([
     supabase.from('caixas').select('*').eq('ativo', true).order('nome'),
-    supabase.from('lancamentos').select('*').not('caixa_id', 'is', null),
+    supabase.from('lancamentos').select('*').not('caixa_id', 'is', null).order('created_at', { ascending: false }),
   ])
 
   const caixasComLancamentos = (caixas ?? []).map((caixa) => ({
