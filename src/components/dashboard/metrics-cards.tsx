@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { Users, Calendar, AlertTriangle, DollarSign, Clock } from 'lucide-react'
+import { Users, Calendar, AlertTriangle, DollarSign, Clock, Landmark, Coins } from 'lucide-react'
 
 export async function MetricsCards() {
   const supabase = await createClient()
@@ -16,6 +16,8 @@ export async function MetricsCards() {
     { data: inadimplentes },
     { data: valorPendente },
     { data: proximaSessao },
+    { data: caixas },
+    { data: lancamentosPagos },
   ] = await Promise.all([
     supabase.from('members').select('id', { count: 'exact', head: true }).eq('ativo', true),
     supabase.from('sessoes').select('id', { count: 'exact', head: true })
@@ -23,10 +25,23 @@ export async function MetricsCards() {
     supabase.from('lancamentos').select('member_id').eq('pago', false),
     supabase.from('lancamentos').select('valor').eq('pago', false),
     supabase.from('sessoes').select('data').gt('data', today).order('data').limit(1),
+    supabase.from('caixas').select('id, nome').eq('ativo', true),
+    supabase.from('lancamentos').select('valor, caixa_id').eq('pago', true).not('caixa_id', 'is', null),
   ])
 
   const totalInadimplentes = new Set((inadimplentes ?? []).map((l) => l.member_id)).size
   const totalValorPendente = (valorPendente ?? []).reduce((s, l) => s + Number(l.valor), 0)
+
+  const barId = (caixas ?? []).find((c) => c.nome === 'Bar da Sabedoria')?.id
+  const lojaId = (caixas ?? []).find((c) => c.nome === 'Caixa da Loja')?.id
+
+  const saldoBar = (lancamentosPagos ?? [])
+    .filter((l) => l.caixa_id === barId)
+    .reduce((s, l) => s + Number(l.valor), 0)
+
+  const saldoLoja = (lancamentosPagos ?? [])
+    .filter((l) => l.caixa_id === lojaId)
+    .reduce((s, l) => s + Number(l.valor), 0)
 
   const cards = [
     {
@@ -59,10 +74,22 @@ export async function MetricsCards() {
       icon: Clock,
       color: 'text-green-400',
     },
+    {
+      title: 'Bar da Sabedoria',
+      value: formatCurrency(saldoBar),
+      icon: Coins,
+      color: 'text-amber-500',
+    },
+    {
+      title: 'Caixa da Loja',
+      value: formatCurrency(saldoLoja),
+      icon: Landmark,
+      color: 'text-violet-400',
+    },
   ]
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
       {cards.map((card) => (
         <div key={card.title} className="p-4 rounded-lg border border-border bg-card space-y-2">
           <div className="flex items-center gap-2">
