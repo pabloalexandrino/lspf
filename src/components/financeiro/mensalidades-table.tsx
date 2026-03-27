@@ -69,7 +69,7 @@ export function MensalidadesTable({ mensalidades, mesAtual }: MensalidadesTableP
     if (result?.error) {
       toast.error(result.error)
     } else {
-      toast.success(`Mensalidades geradas para ${result.count} membros`)
+      toast.success(`Mensalidades geradas para ${result.count ?? 0} membros`)
       router.refresh()
     }
     setLoading(false)
@@ -82,7 +82,7 @@ export function MensalidadesTable({ mensalidades, mesAtual }: MensalidadesTableP
     if (result?.error) {
       toast.error(result.error)
     } else {
-      toast.success(`${result.count} mensalidade(s) marcada(s) como paga(s)`)
+      toast.success(`${result.count ?? 0} mensalidade(s) marcada(s) como paga(s)`)
       setSelected(new Set())
       router.refresh()
     }
