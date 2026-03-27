@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import { createSessao, updateSessao } from '@/app/actions/sessoes'
 import { z } from 'zod'
+import { useRouter } from 'next/navigation'
 
 type SessaoFormValues = z.input<typeof sessaoSchema>
 type SessaoFormOutput = z.output<typeof sessaoSchema>
@@ -21,19 +22,23 @@ interface SessaoFormProps {
 }
 
 export function SessaoForm({ sessao, onSuccess }: SessaoFormProps) {
+  const router = useRouter()
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm<SessaoFormValues, unknown, SessaoFormOutput>({
     resolver: zodResolver(sessaoSchema),
     defaultValues: {
       data: sessao?.data ?? '',
       descricao: sessao?.descricao ?? '',
-      custo_extra: sessao?.custo_extra ?? 0,
-      custo_extra_descricao: sessao?.custo_extra_descricao ?? '',
+      custo_sessao: sessao?.custo_sessao ?? 0,
+      custo_sessao_descricao: sessao?.custo_sessao_descricao ?? '',
+      custo_agape: sessao?.custo_agape ?? 0,
+      custo_agape_descricao: sessao?.custo_agape_descricao ?? '',
       tem_agape: sessao?.tem_agape ?? false,
     },
   })
 
   const temAgape = watch('tem_agape')
-  const custoExtra = watch('custo_extra')
+  const custoSessao = watch('custo_sessao')
+  const custoAgape = watch('custo_agape')
 
   async function onSubmit(data: SessaoFormOutput) {
     const result = sessao
@@ -44,12 +49,13 @@ export function SessaoForm({ sessao, onSuccess }: SessaoFormProps) {
       toast.error(result.error)
     } else {
       toast.success(sessao ? 'Sessão atualizada!' : 'Sessão criada!')
+      router.refresh()
       onSuccess()
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 px-6 pb-6 pt-4">
       <div className="space-y-2">
         <Label htmlFor="data">Data *</Label>
         <Input id="data" type="date" {...register('data')} />
@@ -64,19 +70,24 @@ export function SessaoForm({ sessao, onSuccess }: SessaoFormProps) {
         <Switch id="tem_agape" checked={temAgape} onCheckedChange={(v) => setValue('tem_agape', v)} />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="custo_extra">Custo Extra (R$)</Label>
-        <Input id="custo_extra" type="number" step="0.01" min="0" {...register('custo_extra')} placeholder="0,00" />
-        <p className="text-xs text-muted-foreground">
-          {temAgape ? 'Dividido entre os presentes no ágape' : 'Dividido entre todos os presentes'}
-        </p>
+        <Label htmlFor="custo_sessao">Custo da Sessão (R$)</Label>
+        <Input id="custo_sessao" type="number" step="0.01" min="0" {...register('custo_sessao')} placeholder="0,00" />
+        <p className="text-xs text-muted-foreground">Ex: aluguel de cadeiras - dividido entre os presentes na sessão</p>
+        {Number(custoSessao) > 0 && (
+          <Input {...register('custo_sessao_descricao')} placeholder="Descrição do custo" />
+        )}
       </div>
-      {Number(custoExtra) > 0 && (
+      {temAgape && (
         <div className="space-y-2">
-          <Label htmlFor="custo_extra_descricao">Descrição do custo extra</Label>
-          <Input id="custo_extra_descricao" {...register('custo_extra_descricao')} placeholder="Ex: Aluguel, Material..." />
+          <Label htmlFor="custo_agape">Custo do Ágape (R$)</Label>
+          <Input id="custo_agape" type="number" step="0.01" min="0" {...register('custo_agape')} placeholder="0,00" />
+          <p className="text-xs text-muted-foreground">Dividido entre os presentes no ágape</p>
+          {Number(custoAgape) > 0 && (
+            <Input {...register('custo_agape_descricao')} placeholder="Ex: jantar, bebidas" />
+          )}
         </div>
       )}
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
         {isSubmitting ? 'Salvando...' : sessao ? 'Atualizar' : 'Criar Sessão'}
       </Button>
     </form>
