@@ -12,8 +12,20 @@ export async function createMember(data: unknown) {
   const parsed = memberSchema.safeParse(data)
   if (!parsed.success) return { error: 'Dados inválidos' }
 
-  const { error } = await supabase.from('members').insert(parsed.data)
+  const { cargo_ids, ...memberData } = parsed.data
+
+  const { data: newMember, error } = await supabase
+    .from('members')
+    .insert(memberData)
+    .select('id')
+    .single()
   if (error) return { error: error.message }
+
+  if (cargo_ids.length > 0) {
+    await supabase.from('member_cargos').insert(
+      cargo_ids.map(cargo_id => ({ member_id: newMember.id, cargo_id }))
+    )
+  }
 
   revalidatePath('/members')
   return { success: true }
@@ -27,8 +39,18 @@ export async function updateMember(id: string, data: unknown) {
   const parsed = memberSchema.safeParse(data)
   if (!parsed.success) return { error: 'Dados inválidos' }
 
-  const { error } = await supabase.from('members').update(parsed.data).eq('id', id)
+  const { cargo_ids, ...memberData } = parsed.data
+
+  const { error } = await supabase.from('members').update(memberData).eq('id', id)
   if (error) return { error: error.message }
+
+  await supabase.from('member_cargos').delete().eq('member_id', id)
+
+  if (cargo_ids.length > 0) {
+    await supabase.from('member_cargos').insert(
+      cargo_ids.map(cargo_id => ({ member_id: id, cargo_id }))
+    )
+  }
 
   revalidatePath('/members')
   return { success: true }
