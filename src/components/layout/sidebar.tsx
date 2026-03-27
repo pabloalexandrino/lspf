@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   LayoutDashboard, Users, Calendar, DollarSign, Package,
-  ChevronLeft, ChevronRight, Triangle, ChevronDown,
+  ChevronLeft, ChevronRight, Triangle, ChevronDown, Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,7 @@ const financeiroSubItems = [
 const topNavItems = [
   { href: '/', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/members', icon: Users, label: 'Membros' },
+  { href: '/cargos', icon: Shield, label: 'Cargos' },
   { href: '/sessoes', icon: Calendar, label: 'Sessões' },
   { href: '/produtos', icon: Package, label: 'Produtos' },
 ]
