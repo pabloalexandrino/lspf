@@ -1,6 +1,6 @@
 'use client'
 
-import { Member, PresencaSessao } from '@/lib/types'
+import { MemberWithCargos, PresencaSessao } from '@/lib/types'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { togglePresencaSessao } from '@/app/actions/presencas'
@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 
 interface PresencaListProps {
   sessaoId: string
-  members: Member[]
+  members: MemberWithCargos[]
   presencas: PresencaSessao[]
 }
 
@@ -49,10 +49,20 @@ export function PresencaList({ sessaoId, members, presencas }: PresencaListProps
               onCheckedChange={(checked) => handleToggle(member.id, !!checked)}
             />
             <Label htmlFor={`presenca-${member.id}`} className="cursor-pointer flex-1">
-              <span className="font-medium">{member.nome}</span>
-              {member.nome_historico && (
-                <span className="text-xs text-muted-foreground ml-2">{member.nome_historico}</span>
-              )}
+              <div className="flex flex-col">
+                <span
+                  className="font-medium"
+                  style={{
+                    color: [...member.member_cargos]
+                      .sort((a, b) => a.cargos.ordem - b.cargos.ordem)[0]?.cargos.cor,
+                  }}
+                >
+                  {member.nome}
+                </span>
+                {member.nome_historico && (
+                  <span className="text-xs text-muted-foreground/70">{member.nome_historico}</span>
+                )}
+              </div>
             </Label>
           </div>
         ))}
