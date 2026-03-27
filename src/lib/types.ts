@@ -88,3 +88,20 @@ export type Mensalidade = {
   data_pagamento: string | null
   created_at: string
 }
+
+export type Cargo = {
+  id: string
+  nome: string
+  cor: string
+  ordem: number
+  ativo: boolean
+  created_at: string
+}
+
+export type MemberWithCargos = Member & {
+  member_cargos: Array<{
+    id: string
+    cargo_id: string
+    cargos: Cargo
+  }>
+}

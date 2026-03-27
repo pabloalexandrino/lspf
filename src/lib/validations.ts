@@ -7,8 +7,8 @@ export const memberSchema = z.object({
     v => (v === '' || v === undefined ? null : v),
     z.string().nullable().optional()
   ),
-  cargo: z.string().optional().or(z.literal('')),
   ativo: z.boolean().default(true),
+  cargo_ids: z.array(z.string()).default([]),
 })
 
 export const sessaoSchema = z.object({
@@ -28,6 +28,14 @@ export const produtoSchema = z.object({
   ativo: z.boolean().default(true),
 })
 
+export const cargoSchema = z.object({
+  nome: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
+  cor: z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida').default('#6b7280'),
+  ordem: z.coerce.number().int().min(0).default(0),
+  ativo: z.boolean().default(true),
+})
+
 export type MemberFormData = z.infer<typeof memberSchema>
 export type SessaoFormData = z.infer<typeof sessaoSchema>
 export type ProdutoFormData = z.infer<typeof produtoSchema>
+export type CargoFormData = z.infer<typeof cargoSchema>
