@@ -13,12 +13,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { SessaoForm } from './sessao-form'
 import { Pencil, Trash2, ExternalLink, CalendarPlus } from 'lucide-react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 interface SessoesTableProps {
   sessoes: Sessao[]
+  presencaMap: Record<string, { presentes: number; pct: number }>
 }
 
-export function SessoesTable({ sessoes }: SessoesTableProps) {
+export function SessoesTable({ sessoes, presencaMap }: SessoesTableProps) {
+  const router = useRouter()
   const [editSessao, setEditSessao] = useState<Sessao | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
@@ -29,6 +32,7 @@ export function SessoesTable({ sessoes }: SessoesTableProps) {
       toast.error(result.error)
     } else {
       toast.success('Sessão excluída')
+      router.refresh()
     }
     setDeletingId(null)
   }
@@ -49,6 +53,7 @@ export function SessoesTable({ sessoes }: SessoesTableProps) {
               <TableHead>Data</TableHead>
               <TableHead className="hidden md:table-cell">Descrição</TableHead>
               <TableHead>Ágape</TableHead>
+              <TableHead>Presença</TableHead>
               <TableHead className="hidden sm:table-cell">Custo Extra</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
@@ -56,7 +61,7 @@ export function SessoesTable({ sessoes }: SessoesTableProps) {
           <TableBody>
             {sessoes.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   Nenhuma sessão cadastrada
                 </TableCell>
               </TableRow>
@@ -74,8 +79,21 @@ export function SessoesTable({ sessoes }: SessoesTableProps) {
                       <span className="text-muted-foreground text-sm">—</span>
                     )}
                   </TableCell>
+                  <TableCell>
+                    {(() => {
+                      const { presentes, pct } = presencaMap[sessao.id] ?? { presentes: 0, pct: 0 }
+                      return presentes > 0 ? (
+                        <span className="text-sm">
+                          {presentes}
+                          <span className="text-muted-foreground ml-1">({pct}%)</span>
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">—</span>
+                      )
+                    })()}
+                  </TableCell>
                   <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
-                    {sessao.custo_extra > 0 ? formatCurrency(sessao.custo_extra) : '—'}
+                    {sessao.custo_sessao > 0 ? formatCurrency(sessao.custo_sessao) : '—'}
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">

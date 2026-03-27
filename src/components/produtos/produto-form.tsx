@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import { createProduto, updateProduto } from '@/app/actions/produtos'
 import { z } from 'zod'
+import { useRouter } from 'next/navigation'
 
 type ProdutoFormValues = z.input<typeof produtoSchema>
 type ProdutoFormOutput = z.output<typeof produtoSchema>
@@ -21,6 +22,7 @@ interface ProdutoFormProps {
 }
 
 export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
+  const router = useRouter()
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm<ProdutoFormValues, unknown, ProdutoFormOutput>({
     resolver: zodResolver(produtoSchema),
     defaultValues: {
@@ -42,12 +44,13 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
       toast.error(result.error)
     } else {
       toast.success(produto ? 'Produto atualizado!' : 'Produto criado!')
+      router.refresh()
       onSuccess()
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 px-6 pb-6 pt-4">
       <div className="space-y-2">
         <Label htmlFor="nome">Nome *</Label>
         <Input id="nome" {...register('nome')} placeholder="Nome do produto" />
@@ -71,7 +74,7 @@ export function ProdutoForm({ produto, onSuccess }: ProdutoFormProps) {
           Produtos não são excluídos — apenas inativados quando necessário.
         </p>
       )}
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
         {isSubmitting ? 'Salvando...' : produto ? 'Atualizar' : 'Cadastrar'}
       </Button>
     </form>

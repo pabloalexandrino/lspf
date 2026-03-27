@@ -31,15 +31,11 @@ export function ResumoFinanceiro({
 
   const presentes = presencasSessao.length
   const agapeCount = presencasAgape.length
-  const custoExtra = Number(sessao.custo_extra) || 0
+  const custoSessao = Number(sessao.custo_sessao) || 0
+  const custoAgape = Number(sessao.custo_agape) || 0
 
-  // Preview calculations
-  const custoPorPessoa =
-    custoExtra > 0 && presentes > 0
-      ? sessao.tem_agape
-        ? agapeCount > 0 ? custoExtra / agapeCount : 0
-        : custoExtra / presentes
-      : 0
+  const custoPorPessoa = custoSessao > 0 && presentes > 0 ? custoSessao / presentes : 0
+  const custoAgapePorPessoa = custoAgape > 0 && agapeCount > 0 ? custoAgape / agapeCount : 0
 
   const totalConsumos = consumos.reduce(
     (sum, c) => sum + (c.produto?.preco ?? 0) * c.quantidade,
@@ -75,12 +71,20 @@ export function ResumoFinanceiro({
               <span>{agapeCount} membros</span>
             </>
           )}
-          {custoExtra > 0 && (
+          {custoSessao > 0 && (
             <>
-              <span className="text-muted-foreground">Custo extra total:</span>
-              <span>{formatCurrency(custoExtra)}</span>
-              <span className="text-muted-foreground">Custo por pessoa:</span>
+              <span className="text-muted-foreground">Custo da sessão:</span>
+              <span>{formatCurrency(custoSessao)}</span>
+              <span className="text-muted-foreground">Por presente na sessão:</span>
               <span>{formatCurrency(custoPorPessoa)}</span>
+            </>
+          )}
+          {custoAgape > 0 && (
+            <>
+              <span className="text-muted-foreground">Custo do ágape:</span>
+              <span>{formatCurrency(custoAgape)}</span>
+              <span className="text-muted-foreground">Por presente no ágape:</span>
+              <span>{formatCurrency(custoAgapePorPessoa)}</span>
             </>
           )}
           <span className="text-muted-foreground">Total consumos individuais:</span>

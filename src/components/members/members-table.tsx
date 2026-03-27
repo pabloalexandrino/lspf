@@ -13,12 +13,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { MemberForm } from './member-form'
 import { Pencil, Trash2, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 interface MembersTableProps {
   members: Member[]
 }
 
 export function MembersTable({ members }: MembersTableProps) {
+  const router = useRouter()
   const [search, setSearch] = useState('')
   const [filterAtivo, setFilterAtivo] = useState<'all' | 'active' | 'inactive'>('all')
   const [editMember, setEditMember] = useState<Member | null>(null)
@@ -40,6 +42,7 @@ export function MembersTable({ members }: MembersTableProps) {
       toast.error(result.error)
     } else {
       toast.success('Membro excluído')
+      router.refresh()
     }
     setDeletingId(null)
   }

@@ -9,7 +9,7 @@ export async function Header() {
   const { data: { user } } = await supabase.auth.getUser()
 
   return (
-    <header className="h-14 border-b border-border flex items-center justify-between px-4 sticky top-0 z-10 bg-background">
+    <header className="h-14 py-4 border-b border-border flex items-center justify-between px-4 sticky top-0 z-10 bg-black">
       <MobileNav />
       <div className="flex-1" />
       <div className="flex items-center gap-3">

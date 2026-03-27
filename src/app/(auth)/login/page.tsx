@@ -23,7 +23,7 @@ export default function LoginPage() {
           <div className="flex justify-center">
             <Triangle className="h-12 w-12 text-primary" strokeWidth={1.5} />
           </div>
-          <CardTitle className="text-2xl">Loja Maçônica</CardTitle>
+          <CardTitle className="text-2xl">Luz da Sabedoria, Prosperidade e Fraternidade</CardTitle>
           <CardDescription>Acesse sua conta</CardDescription>
         </CardHeader>
         <CardContent>

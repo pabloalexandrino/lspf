@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { Plus, Trash2 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 interface ConsumoFormProps {
   sessaoId: string
@@ -19,6 +20,7 @@ interface ConsumoFormProps {
 }
 
 export function ConsumoForm({ sessaoId, members, produtos, consumos, presencasSessao }: ConsumoFormProps) {
+  const router = useRouter()
   const presenteIds = new Set(presencasSessao.map((p) => p.member_id))
   const membersPresentes = members.filter((m) => presenteIds.has(m.id))
   const produtosAtivos = produtos.filter((p) => p.ativo)
@@ -42,13 +44,18 @@ export function ConsumoForm({ sessaoId, members, produtos, consumos, presencasSe
       setSelectedMember('')
       setSelectedProduto('')
       setQuantidade(1)
+      router.refresh()
     }
     setLoading(false)
   }
 
   async function handleRemove(id: string) {
     const result = await removeConsumoProduto(id, sessaoId)
-    if (result?.error) toast.error(result.error)
+    if (result?.error) {
+      toast.error(result.error)
+    } else {
+      router.refresh()
+    }
   }
 
   // Group consumos by member

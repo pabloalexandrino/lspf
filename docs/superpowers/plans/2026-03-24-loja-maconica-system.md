@@ -473,7 +473,7 @@ export async function logout() {
 
 - [ ] Create `src/app/(auth)/login/page.tsx` — centered card with:
   - Compass/triangle icon (Lucide `Triangle` or `Compass`) in gold
-  - Title "Loja Maçônica"
+  - Title "Luz da Sabedoria, Prosperidade e Fraternidade"
   - Email + password fields using shadcn Form + Input
   - Submit button with loading state using `useFormStatus`
   - Error message display

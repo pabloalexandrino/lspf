@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Loja Maçônica",
+  title: "Luz da Sabedoria, Prosperidade e Fraternidade",
   description: "Sistema de Gestão",
 };
 

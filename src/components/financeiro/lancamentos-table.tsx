@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from 'sonner'
 import { CheckCheck } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 type LancamentoEnriched = Lancamento & {
   member?: Member
@@ -24,6 +25,7 @@ interface LancamentosTableProps {
 }
 
 export function LancamentosTable({ lancamentos, members, sessoes }: LancamentosTableProps) {
+  const router = useRouter()
   const [filterMember, setFilterMember] = useState('all')
   const [filterTipo, setFilterTipo] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
@@ -68,13 +70,18 @@ export function LancamentosTable({ lancamentos, members, sessoes }: LancamentosT
     } else {
       toast.success(`${selected.size} lançamentos marcados como pagos`)
       setSelected(new Set())
+      router.refresh()
     }
     setLoading(false)
   }
 
   async function handleTogglePago(id: string, pago: boolean) {
     const result = await marcarPago(id, !pago)
-    if (result?.error) toast.error(result.error)
+    if (result?.error) {
+      toast.error(result.error)
+    } else {
+      router.refresh()
+    }
   }
 
   const tipoBadgeVariant = (tipo: string) => {

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { togglePresencaAgape } from '@/app/actions/presencas'
 import { toast } from 'sonner'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface AgapeListProps {
   sessaoId: string
@@ -15,6 +16,7 @@ interface AgapeListProps {
 }
 
 export function AgapeList({ sessaoId, members, presencasSessao, presencasAgape }: AgapeListProps) {
+  const router = useRouter()
   const presenteIds = new Set(presencasSessao.map((p) => p.member_id))
   const agapeIds = new Set(presencasAgape.map((p) => p.member_id))
   const [loading, setLoading] = useState<string | null>(null)
@@ -24,7 +26,11 @@ export function AgapeList({ sessaoId, members, presencasSessao, presencasAgape }
   async function handleToggle(memberId: string, checked: boolean) {
     setLoading(memberId)
     const result = await togglePresencaAgape(sessaoId, memberId, checked)
-    if (result?.error) toast.error(result.error)
+    if (result?.error) {
+      toast.error(result.error)
+    } else {
+      router.refresh()
+    }
     setLoading(null)
   }
 

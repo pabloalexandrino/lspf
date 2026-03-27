@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { togglePresencaSessao } from '@/app/actions/presencas'
 import { toast } from 'sonner'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface PresencaListProps {
   sessaoId: string
@@ -14,13 +15,18 @@ interface PresencaListProps {
 }
 
 export function PresencaList({ sessaoId, members, presencas }: PresencaListProps) {
+  const router = useRouter()
   const presenteIds = new Set(presencas.map((p) => p.member_id))
   const [loading, setLoading] = useState<string | null>(null)
 
   async function handleToggle(memberId: string, checked: boolean) {
     setLoading(memberId)
     const result = await togglePresencaSessao(sessaoId, memberId, checked)
-    if (result?.error) toast.error(result.error)
+    if (result?.error) {
+      toast.error(result.error)
+    } else {
+      router.refresh()
+    }
     setLoading(null)
   }
 

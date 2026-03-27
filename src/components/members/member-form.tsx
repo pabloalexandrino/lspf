@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import { createMember, updateMember } from '@/app/actions/members'
 import { z } from 'zod'
+import { useRouter } from 'next/navigation'
 
 type MemberFormValues = z.input<typeof memberSchema>
 type MemberFormOutput = z.output<typeof memberSchema>
@@ -21,6 +22,7 @@ interface MemberFormProps {
 }
 
 export function MemberForm({ member, onSuccess }: MemberFormProps) {
+  const router = useRouter()
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } = useForm<MemberFormValues, unknown, MemberFormOutput>({
     resolver: zodResolver(memberSchema),
     defaultValues: {
@@ -43,12 +45,13 @@ export function MemberForm({ member, onSuccess }: MemberFormProps) {
       toast.error(result.error)
     } else {
       toast.success(member ? 'Membro atualizado!' : 'Membro criado!')
+      router.refresh()
       onSuccess()
     }
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 px-6 pb-6 pt-4">
       <div className="space-y-2">
         <Label htmlFor="nome">Nome *</Label>
         <Input id="nome" {...register('nome')} placeholder="Nome completo" />
@@ -74,7 +77,7 @@ export function MemberForm({ member, onSuccess }: MemberFormProps) {
           onCheckedChange={(v) => setValue('ativo', v)}
         />
       </div>
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button type="submit" className="w-full h-11" disabled={isSubmitting}>
         {isSubmitting ? 'Salvando...' : member ? 'Atualizar' : 'Cadastrar'}
       </Button>
     </form>
