@@ -15,10 +15,12 @@ export default async function FinanceiroPage() {
     { data: lancamentosRaw },
     { data: members },
     { data: sessoes },
+    { data: caixas },
   ] = await Promise.all([
     supabase.from('lancamentos').select('*').order('created_at', { ascending: false }).limit(500),
     supabase.from('members').select('*').order('nome'),
     supabase.from('sessoes').select('*').order('data', { ascending: false }),
+    supabase.from('caixas').select('*').eq('ativo', true).order('nome'),
   ])
 
   // Enrich lancamentos
@@ -61,6 +63,7 @@ export default async function FinanceiroPage() {
             lancamentos={lancamentos}
             members={members ?? []}
             sessoes={sessoes ?? []}
+            caixas={caixas ?? []}
           />
         </TabsContent>
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Lancamento, Member, Sessao } from '@/lib/types'
+import { Lancamento, Member, Sessao, Caixa } from '@/lib/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { marcarPago, marcarPagoLote } from '@/app/actions/financeiro'
 import { Badge } from '@/components/ui/badge'
@@ -22,14 +22,16 @@ interface LancamentosTableProps {
   lancamentos: LancamentoEnriched[]
   members: Member[]
   sessoes: Sessao[]
+  caixas?: Caixa[]
 }
 
-export function LancamentosTable({ lancamentos, members, sessoes }: LancamentosTableProps) {
+export function LancamentosTable({ lancamentos, members, sessoes, caixas }: LancamentosTableProps) {
   const router = useRouter()
   const [filterMember, setFilterMember] = useState('all')
   const [filterTipo, setFilterTipo] = useState('all')
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterSessao, setFilterSessao] = useState('all')
+  const [filterCaixa, setFilterCaixa] = useState('all')
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
 
@@ -40,9 +42,10 @@ export function LancamentosTable({ lancamentos, members, sessoes }: LancamentosT
       if (filterStatus === 'pago' && !l.pago) return false
       if (filterStatus === 'pendente' && l.pago) return false
       if (filterSessao !== 'all' && l.sessao_id !== filterSessao) return false
+      if (filterCaixa !== 'all' && l.caixa_id !== filterCaixa) return false
       return true
     })
-  }, [lancamentos, filterMember, filterTipo, filterStatus, filterSessao])
+  }, [lancamentos, filterMember, filterTipo, filterStatus, filterSessao, filterCaixa])
 
   function toggleSelect(id: string) {
     setSelected((prev) => {
@@ -115,6 +118,10 @@ export function LancamentosTable({ lancamentos, members, sessoes }: LancamentosT
             <SelectItem value="sessao">Sessão</SelectItem>
             <SelectItem value="agape">Ágape</SelectItem>
             <SelectItem value="produto">Produto</SelectItem>
+            <SelectItem value="mensalidade">Mensalidade</SelectItem>
+            <SelectItem value="oferta">Oferta</SelectItem>
+            <SelectItem value="deposito">Depósito</SelectItem>
+            <SelectItem value="outro">Outro</SelectItem>
           </SelectContent>
         </Select>
 
@@ -140,6 +147,20 @@ export function LancamentosTable({ lancamentos, members, sessoes }: LancamentosT
             ))}
           </SelectContent>
         </Select>
+
+        {caixas && caixas.length > 0 && (
+          <Select value={filterCaixa} onValueChange={(v) => setFilterCaixa(v ?? 'all')}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Caixa" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os caixas</SelectItem>
+              {caixas.map((c) => (
+                <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         {selected.size > 0 && (
           <Button size="sm" onClick={handleMarcarPagoLote} disabled={loading}>
