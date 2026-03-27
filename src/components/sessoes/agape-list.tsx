@@ -1,6 +1,6 @@
 'use client'
 
-import { Member, PresencaSessao, PresencaAgape } from '@/lib/types'
+import { MemberWithCargos, PresencaSessao, PresencaAgape } from '@/lib/types'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { togglePresencaAgape } from '@/app/actions/presencas'
@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 
 interface AgapeListProps {
   sessaoId: string
-  members: Member[]
+  members: MemberWithCargos[]
   presencasSessao: PresencaSessao[]
   presencasAgape: PresencaAgape[]
 }
@@ -56,8 +56,21 @@ export function AgapeList({ sessaoId, members, presencasSessao, presencasAgape }
               disabled={loading === member.id}
               onCheckedChange={(checked) => handleToggle(member.id, !!checked)}
             />
-            <Label htmlFor={`agape-${member.id}`} className="cursor-pointer">
-              {member.nome}
+            <Label htmlFor={`agape-${member.id}`} className="cursor-pointer flex-1">
+              <div className="flex flex-col">
+                <span
+                  className="font-medium"
+                  style={{
+                    color: [...member.member_cargos]
+                      .sort((a, b) => a.cargos.ordem - b.cargos.ordem)[0]?.cargos.cor,
+                  }}
+                >
+                  {member.nome}
+                </span>
+                {member.nome_historico && (
+                  <span className="text-xs text-muted-foreground/70">{member.nome_historico}</span>
+                )}
+              </div>
             </Label>
           </div>
         ))}

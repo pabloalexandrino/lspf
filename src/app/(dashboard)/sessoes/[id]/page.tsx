@@ -84,7 +84,7 @@ export default async function SessaoDetailPage({ params }: PageProps) {
 
         {sessao.tem_agape && (
           <TabsContent value="agape" className="mt-4">
-            <AgapeList sessaoId={id} members={members ?? []} presencasSessao={presencasSessao ?? []} presencasAgape={presencasAgape ?? []} />
+            <AgapeList sessaoId={id} members={(members ?? []) as MemberWithCargos[]} presencasSessao={presencasSessao ?? []} presencasAgape={presencasAgape ?? []} />
           </TabsContent>
         )}
 
