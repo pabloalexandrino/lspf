@@ -9,6 +9,10 @@ export const memberSchema = z.object({
   ),
   ativo: z.boolean().default(true),
   cargo_ids: z.array(z.string()).default([]),
+  whatsapp: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().regex(/^\d{10,11}$/, 'WhatsApp deve ter 10 ou 11 dígitos').nullable().optional()
+  ),
 })
 
 export const sessaoSchema = z.object({

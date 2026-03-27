@@ -5,6 +5,7 @@ export type Member = {
   data_nascimento: string | null
   cargo: string | null
   ativo: boolean
+  whatsapp: string | null
   created_at: string
 }
 
@@ -104,4 +105,8 @@ export type MemberWithCargos = Member & {
     cargo_id: string
     cargos: Cargo
   }>
+}
+
+export type LancamentoWithSessao = Lancamento & {
+  sessao?: { data: string; descricao: string | null } | null
 }
