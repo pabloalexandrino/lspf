@@ -50,8 +50,8 @@ export function PresencaList({ sessaoId, members, presencas }: PresencaListProps
             />
             <Label htmlFor={`presenca-${member.id}`} className="cursor-pointer flex-1">
               <span className="font-medium">{member.nome}</span>
-              {member.cargo && (
-                <span className="text-xs text-muted-foreground ml-2">{member.cargo}</span>
+              {member.nome_historico && (
+                <span className="text-xs text-muted-foreground ml-2">{member.nome_historico}</span>
               )}
             </Label>
           </div>

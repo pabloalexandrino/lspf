@@ -22,9 +22,10 @@ export async function createMember(data: unknown) {
   if (error) return { error: error.message }
 
   if (cargo_ids.length > 0) {
-    await supabase.from('member_cargos').insert(
+    const { error: cargosError } = await supabase.from('member_cargos').insert(
       cargo_ids.map(cargo_id => ({ member_id: newMember.id, cargo_id }))
     )
+    if (cargosError) return { error: cargosError.message }
   }
 
   revalidatePath('/members')
@@ -44,12 +45,14 @@ export async function updateMember(id: string, data: unknown) {
   const { error } = await supabase.from('members').update(memberData).eq('id', id)
   if (error) return { error: error.message }
 
-  await supabase.from('member_cargos').delete().eq('member_id', id)
+  const { error: deleteError } = await supabase.from('member_cargos').delete().eq('member_id', id)
+  if (deleteError) return { error: deleteError.message }
 
   if (cargo_ids.length > 0) {
-    await supabase.from('member_cargos').insert(
+    const { error: insertError } = await supabase.from('member_cargos').insert(
       cargo_ids.map(cargo_id => ({ member_id: id, cargo_id }))
     )
+    if (insertError) return { error: insertError.message }
   }
 
   revalidatePath('/members')
