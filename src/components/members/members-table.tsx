@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Member } from '@/lib/types'
+import { MemberWithCargos, Cargo } from '@/lib/types'
 import { formatDate } from '@/lib/utils'
 import { deleteMember } from '@/app/actions/members'
 import { Button } from '@/components/ui/button'
@@ -11,19 +11,22 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { MemberForm } from './member-form'
+import { MemberDisplay } from './member-display'
+import { CargoBadge } from './cargo-badge'
 import { Pencil, Trash2, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
 interface MembersTableProps {
-  members: Member[]
+  members: MemberWithCargos[]
+  allCargos: Cargo[]
 }
 
-export function MembersTable({ members }: MembersTableProps) {
+export function MembersTable({ members, allCargos }: MembersTableProps) {
   const router = useRouter()
   const [search, setSearch] = useState('')
   const [filterAtivo, setFilterAtivo] = useState<'all' | 'active' | 'inactive'>('all')
-  const [editMember, setEditMember] = useState<Member | null>(null)
+  const [editMember, setEditMember] = useState<MemberWithCargos | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
 
@@ -79,7 +82,7 @@ export function MembersTable({ members }: MembersTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Nome</TableHead>
-              <TableHead className="hidden md:table-cell">Cargo</TableHead>
+              <TableHead className="hidden md:table-cell">Cargos</TableHead>
               <TableHead className="hidden sm:table-cell">Nascimento</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
@@ -96,15 +99,23 @@ export function MembersTable({ members }: MembersTableProps) {
               filtered.map((member) => (
                 <TableRow key={member.id}>
                   <TableCell>
-                    <div>
-                      <p className="font-medium">{member.nome}</p>
-                      {member.nome_historico && (
-                        <p className="text-xs text-muted-foreground">{member.nome_historico}</p>
-                      )}
-                    </div>
+                    <MemberDisplay member={member} />
                   </TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                    {member.cargo || '—'}
+                  <TableCell className="hidden md:table-cell">
+                    {member.member_cargos.length === 0 ? (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {member.member_cargos.slice(0, 2).map((mc) => (
+                          <CargoBadge key={mc.cargo_id} cargo={mc.cargos} />
+                        ))}
+                        {member.member_cargos.length > 2 && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
+                            +{member.member_cargos.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
                     {member.data_nascimento ? formatDate(member.data_nascimento) : '—'}
@@ -138,7 +149,7 @@ export function MembersTable({ members }: MembersTableProps) {
             <SheetTitle>Novo Membro</SheetTitle>
           </SheetHeader>
           <div className="mt-6">
-            <MemberForm onSuccess={() => setShowCreate(false)} />
+            <MemberForm allCargos={allCargos} onSuccess={() => setShowCreate(false)} />
           </div>
         </SheetContent>
       </Sheet>
@@ -150,7 +161,13 @@ export function MembersTable({ members }: MembersTableProps) {
             <SheetTitle>Editar Membro</SheetTitle>
           </SheetHeader>
           <div className="mt-6">
-            {editMember && <MemberForm member={editMember} onSuccess={() => setEditMember(null)} />}
+            {editMember && (
+              <MemberForm
+                member={editMember}
+                allCargos={allCargos}
+                onSuccess={() => setEditMember(null)}
+              />
+            )}
           </div>
         </SheetContent>
       </Sheet>
