@@ -37,6 +37,7 @@ export function MemberForm({ member, allCargos, onSuccess }: MemberFormProps) {
         data_nascimento: member?.data_nascimento ?? '',
         ativo: member?.ativo ?? true,
         cargo_ids: currentCargoIds,
+        whatsapp: member?.whatsapp ?? '',
       },
     })
 
@@ -50,6 +51,14 @@ export function MemberForm({ member, allCargos, onSuccess }: MemberFormProps) {
     } else {
       setValue('cargo_ids', [...current, cargoId])
     }
+  }
+
+  function formatWhatsapp(value: string): string {
+    const digits = value.replace(/\D/g, '').slice(0, 11)
+    if (digits.length <= 10) {
+      return digits.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '')
+    }
+    return digits.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '')
   }
 
   async function onSubmit(data: MemberFormOutput) {
@@ -112,6 +121,20 @@ export function MemberForm({ member, allCargos, onSuccess }: MemberFormProps) {
             })}
           </div>
         )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="whatsapp">WhatsApp</Label>
+        <Input
+          id="whatsapp"
+          placeholder="(44) 99999-8888"
+          value={formatWhatsapp((watch('whatsapp') as string) ?? '')}
+          onChange={(e) => {
+            const digits = e.target.value.replace(/\D/g, '').slice(0, 11)
+            setValue('whatsapp', digits)
+          }}
+        />
+        {errors.whatsapp && <p className="text-xs text-destructive">{errors.whatsapp.message}</p>}
       </div>
 
       <div className="flex items-center justify-between">
