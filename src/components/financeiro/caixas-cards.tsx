@@ -1,12 +1,16 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Caixa, Lancamento } from '@/lib/types'
+import { Caixa, Lancamento, Member, Sessao } from '@/lib/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
+import { SaidaCaixaSheet } from './saida-caixa-sheet'
+import { excluirSaida } from '@/app/actions/saidas-caixa'
+import { toast } from 'sonner'
+import { useRouter } from 'next/navigation'
 
 interface CaixaComLancamentos extends Caixa {
   lancamentos: Lancamento[]
@@ -14,33 +18,54 @@ interface CaixaComLancamentos extends Caixa {
 
 interface CaixasCardsProps {
   caixas: CaixaComLancamentos[]
+  sessoes: Pick<Sessao, 'id' | 'data' | 'descricao'>[]
+  members: Pick<Member, 'id' | 'nome'>[]
 }
 
-export function CaixasCards({ caixas }: CaixasCardsProps) {
+export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
+  const router = useRouter()
   const [extratoCaixaId, setExtratoCaixaId] = useState<string | null>(null)
   const [filterDe, setFilterDe] = useState('')
   const [filterAte, setFilterAte] = useState('')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const caixaExtrato = caixas.find((c) => c.id === extratoCaixaId)
 
   const lancamentosFiltrados = useMemo(() => {
     if (!caixaExtrato) return []
     return caixaExtrato.lancamentos.filter((l) => {
-      if (filterDe && l.created_at.substring(0, 10) < filterDe) return false
-      if (filterAte && l.created_at.substring(0, 10) > filterAte) return false
+      const dateKey = l.data_pagamento ?? l.created_at.substring(0, 10)
+      if (filterDe && dateKey < filterDe) return false
+      if (filterAte && dateKey > filterAte) return false
       return true
     })
   }, [caixaExtrato, filterDe, filterAte])
+
+  async function handleExcluirSaida(id: string) {
+    setDeletingId(id)
+    const result = await excluirSaida(id)
+    if (result?.error) {
+      toast.error(result.error)
+    } else {
+      toast.success('Saída excluída')
+      router.refresh()
+    }
+    setDeletingId(null)
+  }
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {caixas.map((caixa) => {
-          const saldo = caixa.lancamentos
-            .filter((l) => l.pago)
+          const entradas = caixa.lancamentos
+            .filter((l) => l.pago && l.tipo !== 'saida_caixa')
             .reduce((s, l) => s + l.valor, 0)
+          const saidas = caixa.lancamentos
+            .filter((l) => l.tipo === 'saida_caixa')
+            .reduce((s, l) => s + l.valor, 0)
+          const saldo = entradas - saidas
           const pendente = caixa.lancamentos
-            .filter((l) => !l.pago)
+            .filter((l) => !l.pago && l.tipo !== 'saida_caixa')
             .reduce((s, l) => s + l.valor, 0)
           const isOpen = extratoCaixaId === caixa.id
 
@@ -54,23 +79,28 @@ export function CaixasCards({ caixas }: CaixasCardsProps) {
               </div>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <p className="text-xs text-muted-foreground">Saldo (pago)</p>
-                  <p className="text-lg font-bold text-green-500">{formatCurrency(saldo)}</p>
+                  <p className="text-xs text-muted-foreground">Saldo</p>
+                  <p className={`text-lg font-bold ${saldo >= 0 ? 'text-green-500' : 'text-destructive'}`}>
+                    {formatCurrency(saldo)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground">Pendente</p>
                   <p className="text-lg font-bold text-destructive">{formatCurrency(pendente)}</p>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full"
-                onClick={() => setExtratoCaixaId(isOpen ? null : caixa.id)}
-              >
-                {isOpen ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
-                {isOpen ? 'Fechar extrato' : 'Ver extrato'}
-              </Button>
+              <div className="space-y-2">
+                <SaidaCaixaSheet caixa={caixa} sessoes={sessoes} members={members} />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setExtratoCaixaId(isOpen ? null : caixa.id)}
+                >
+                  {isOpen ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
+                  {isOpen ? 'Fechar extrato' : 'Ver extrato'}
+                </Button>
+              </div>
             </div>
           )
         })}
@@ -107,38 +137,72 @@ export function CaixasCards({ caixas }: CaixasCardsProps) {
                   <TableHead>Tipo</TableHead>
                   <TableHead>Valor</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {lancamentosFiltrados.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       Nenhum lançamento no período
                     </TableCell>
                   </TableRow>
                 ) : (
-                  lancamentosFiltrados.map((l) => (
-                    <TableRow key={l.id}>
-                      <TableCell className="text-sm">{formatDate(l.created_at.substring(0, 10))}</TableCell>
-                      <TableCell className="text-sm">{l.descricao ?? '—'}</TableCell>
-                      <TableCell>
-                        <Badge variant="secondary" className="text-xs capitalize">{l.tipo}</Badge>
-                      </TableCell>
-                      <TableCell className="text-sm">{formatCurrency(l.valor)}</TableCell>
-                      <TableCell>
-                        <Badge variant={l.pago ? 'default' : 'secondary'} className="text-xs">
-                          {l.pago ? 'Pago' : 'Pendente'}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  lancamentosFiltrados.map((l) => {
+                    const isSaida = l.tipo === 'saida_caixa'
+                    const dateDisplay = l.data_pagamento ?? l.created_at.substring(0, 10)
+                    return (
+                      <TableRow key={l.id}>
+                        <TableCell className="text-sm">{formatDate(dateDisplay)}</TableCell>
+                        <TableCell className="text-sm">{l.descricao ?? '—'}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="secondary"
+                            className={`text-xs capitalize ${isSaida ? 'border-destructive/50 text-destructive' : ''}`}
+                          >
+                            {isSaida ? 'saída' : l.tipo}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className={`text-sm font-medium ${isSaida ? 'text-destructive' : 'text-green-500'}`}>
+                          {isSaida ? '— ' : '+ '}
+                          {formatCurrency(l.valor)}
+                        </TableCell>
+                        <TableCell>
+                          {isSaida ? (
+                            <Badge variant="secondary" className="text-xs">Realizada</Badge>
+                          ) : (
+                            <Badge variant={l.pago ? 'default' : 'secondary'} className="text-xs">
+                              {l.pago ? 'Pago' : 'Pendente'}
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isSaida && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={deletingId === l.id}
+                              onClick={() => handleExcluirSaida(l.id)}
+                            >
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })
                 )}
               </TableBody>
             </Table>
           </div>
-          <p className="text-xs text-muted-foreground">
-            {lancamentosFiltrados.length} lançamento(s) — Total pago: {formatCurrency(lancamentosFiltrados.filter(l => l.pago).reduce((s, l) => s + l.valor, 0))}
-          </p>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <span>{lancamentosFiltrados.length} lançamento(s)</span>
+            <span>
+              Entradas: {formatCurrency(lancamentosFiltrados.filter(l => l.pago && l.tipo !== 'saida_caixa').reduce((s, l) => s + l.valor, 0))}
+              {' | '}
+              Saídas: {formatCurrency(lancamentosFiltrados.filter(l => l.tipo === 'saida_caixa').reduce((s, l) => s + l.valor, 0))}
+            </span>
+          </div>
         </div>
       )}
     </div>
