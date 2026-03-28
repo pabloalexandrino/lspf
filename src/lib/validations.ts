@@ -43,3 +43,20 @@ export type MemberFormData = z.infer<typeof memberSchema>
 export type SessaoFormData = z.infer<typeof sessaoSchema>
 export type ProdutoFormData = z.infer<typeof produtoSchema>
 export type CargoFormData = z.infer<typeof cargoSchema>
+
+export const saidaCaixaSchema = z.object({
+  caixa_id: z.string().uuid('Caixa inválido'),
+  descricao: z.string().min(1, 'Descrição obrigatória'),
+  valor: z.coerce.number().min(0.01, 'Valor deve ser maior que zero'),
+  data_pagamento: z.string().min(1, 'Data obrigatória'),
+  sessao_id: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().uuid().nullable().optional()
+  ),
+  member_id: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().uuid().nullable().optional()
+  ),
+})
+
+export type SaidaCaixaFormData = z.infer<typeof saidaCaixaSchema>

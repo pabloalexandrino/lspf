@@ -55,7 +55,7 @@ export type Lancamento = {
   id: string
   sessao_id: string | null
   member_id: string | null
-  tipo: 'sessao' | 'agape' | 'produto' | 'mensalidade' | 'oferta' | 'deposito' | 'outro'
+  tipo: 'sessao' | 'agape' | 'produto' | 'mensalidade' | 'oferta' | 'deposito' | 'outro' | 'saida_caixa'
   descricao: string | null
   valor: number
   pago: boolean
