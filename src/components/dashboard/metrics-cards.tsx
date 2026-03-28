@@ -26,7 +26,7 @@ export async function MetricsCards() {
     supabase.from('lancamentos').select('valor').eq('pago', false),
     supabase.from('sessoes').select('data').gt('data', today).order('data').limit(1),
     supabase.from('caixas').select('id, nome').eq('ativo', true),
-    supabase.from('lancamentos').select('valor, caixa_id').eq('pago', true).not('caixa_id', 'is', null),
+    supabase.from('lancamentos').select('valor, caixa_id, tipo, member_id, pago').not('caixa_id', 'is', null),
   ])
 
   const totalInadimplentes = new Set((inadimplentes ?? []).map((l) => l.member_id)).size
@@ -35,13 +35,20 @@ export async function MetricsCards() {
   const barId = (caixas ?? []).find((c) => c.nome === 'Bar da Sabedoria')?.id
   const lojaId = (caixas ?? []).find((c) => c.nome === 'Caixa da Loja')?.id
 
-  const saldoBar = (lancamentosPagos ?? [])
-    .filter((l) => l.caixa_id === barId)
-    .reduce((s, l) => s + Number(l.valor), 0)
+  function calcularSaldo(caixaId: string | undefined) {
+    if (!caixaId) return 0
+    const rows = (lancamentosPagos ?? []).filter((l) => l.caixa_id === caixaId)
+    const entradas = rows
+      .filter((l) => l.tipo !== 'saida_caixa' && l.pago && l.member_id === null)
+      .reduce((s, l) => s + Number(l.valor), 0)
+    const saidas = rows
+      .filter((l) => l.tipo === 'saida_caixa')
+      .reduce((s, l) => s + Number(l.valor), 0)
+    return entradas - saidas
+  }
 
-  const saldoLoja = (lancamentosPagos ?? [])
-    .filter((l) => l.caixa_id === lojaId)
-    .reduce((s, l) => s + Number(l.valor), 0)
+  const saldoBar = calcularSaldo(barId)
+  const saldoLoja = calcularSaldo(lojaId)
 
   const cards = [
     {

@@ -59,14 +59,14 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {caixas.map((caixa) => {
           const entradas = caixa.lancamentos
-            .filter((l) => l.pago && l.tipo !== 'saida_caixa')
+            .filter((l) => l.pago && l.tipo !== 'saida_caixa' && l.member_id === null)
             .reduce((s, l) => s + l.valor, 0)
           const saidas = caixa.lancamentos
             .filter((l) => l.tipo === 'saida_caixa')
             .reduce((s, l) => s + l.valor, 0)
           const saldo = entradas - saidas
           const pendente = caixa.lancamentos
-            .filter((l) => !l.pago && l.tipo !== 'saida_caixa')
+            .filter((l) => !l.pago && l.tipo !== 'saida_caixa' && l.member_id === null)
             .reduce((s, l) => s + l.valor, 0)
           const isOpen = extratoCaixaId === caixa.id
 
@@ -199,7 +199,7 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{lancamentosFiltrados.length} lançamento(s)</span>
             <span>
-              Entradas: {formatCurrency(lancamentosFiltrados.filter(l => l.pago && l.tipo !== 'saida_caixa').reduce((s, l) => s + l.valor, 0))}
+              Entradas: {formatCurrency(lancamentosFiltrados.filter(l => l.pago && l.tipo !== 'saida_caixa' && l.member_id === null).reduce((s, l) => s + l.valor, 0))}
               {' | '}
               Saídas: {formatCurrency(lancamentosFiltrados.filter(l => l.tipo === 'saida_caixa').reduce((s, l) => s + l.valor, 0))}
             </span>
