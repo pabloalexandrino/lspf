@@ -42,6 +42,7 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
   }, [caixaExtrato, filterDe, filterAte])
 
   async function handleExcluirSaida(id: string) {
+    if (!window.confirm('Excluir esta saída de caixa? Esta ação não pode ser desfeita.')) return
     setDeletingId(id)
     const result = await excluirSaida(id)
     if (result?.error) {
@@ -163,7 +164,7 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
                             {isSaida ? 'saída' : l.tipo}
                           </Badge>
                         </TableCell>
-                        <TableCell className={`text-sm font-medium ${isSaida ? 'text-destructive' : 'text-green-500'}`}>
+                        <TableCell className={`text-sm font-medium ${isSaida ? 'text-destructive' : l.pago ? 'text-green-500' : 'text-muted-foreground'}`}>
                           {isSaida ? '— ' : '+ '}
                           {formatCurrency(l.valor)}
                         </TableCell>
