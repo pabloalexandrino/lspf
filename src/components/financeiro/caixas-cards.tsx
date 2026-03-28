@@ -8,7 +8,8 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { SaidaCaixaSheet } from './saida-caixa-sheet'
-import { excluirSaida } from '@/app/actions/saidas-caixa'
+import { EntradaCaixaSheet } from './entrada-caixa-sheet'
+import { excluirSaida, excluirEntrada } from '@/app/actions/saidas-caixa'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -54,6 +55,19 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
     setDeletingId(null)
   }
 
+  async function handleExcluirEntrada(id: string) {
+    if (!window.confirm('Excluir esta entrada de caixa? Esta ação não pode ser desfeita.')) return
+    setDeletingId(id)
+    const result = await excluirEntrada(id)
+    if (result?.error) {
+      toast.error(result.error)
+    } else {
+      toast.success('Entrada excluída')
+      router.refresh()
+    }
+    setDeletingId(null)
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -91,7 +105,10 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
                 </div>
               </div>
               <div className="space-y-2">
-                <SaidaCaixaSheet caixa={caixa} sessoes={sessoes} members={members} />
+                <div className="grid grid-cols-2 gap-2">
+                  <EntradaCaixaSheet caixa={caixa} sessoes={sessoes} />
+                  <SaidaCaixaSheet caixa={caixa} sessoes={sessoes} members={members} />
+                </div>
                 <Button
                   variant="outline"
                   size="sm"
@@ -186,6 +203,16 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
                               onClick={() => handleExcluirSaida(l.id)}
                             >
                               <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          )}
+                          {['deposito', 'oferta', 'outro'].includes(l.tipo) && l.member_id === null && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              disabled={deletingId === l.id}
+                              onClick={() => handleExcluirEntrada(l.id)}
+                            >
+                              <Trash2 className="h-3 w-3 text-muted-foreground" />
                             </Button>
                           )}
                         </TableCell>
