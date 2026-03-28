@@ -93,7 +93,7 @@ export default async function SessaoDetailPage({ params }: PageProps) {
         </TabsContent>
 
         <TabsContent value="financeiro" className="mt-4">
-          <ResumoFinanceiro sessao={sessao} members={members ?? []} presencasSessao={presencasSessao ?? []} presencasAgape={presencasAgape ?? []} consumos={consumos} lancamentos={lancamentos} />
+          <ResumoFinanceiro sessao={sessao} members={(members ?? []) as MemberWithCargos[]} presencasSessao={presencasSessao ?? []} presencasAgape={presencasAgape ?? []} consumos={consumos} lancamentos={lancamentos} />
         </TabsContent>
 
         <TabsContent value="tronco" className="mt-4">

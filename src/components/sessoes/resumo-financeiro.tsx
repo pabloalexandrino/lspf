@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Lancamento, Member, PresencaSessao, PresencaAgape, ConsumoProduto, Produto, Sessao } from '@/lib/types'
+import { Lancamento, MemberWithCargos, PresencaSessao, PresencaAgape, ConsumoProduto, Produto, Sessao, Member } from '@/lib/types'
+import { WhatsAppButton } from '@/components/members/whatsapp-button'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +13,7 @@ import { RefreshCw, CheckCircle } from 'lucide-react'
 
 interface ResumoFinanceiroProps {
   sessao: Sessao
-  members: Member[]
+  members: MemberWithCargos[]
   presencasSessao: PresencaSessao[]
   presencasAgape: PresencaAgape[]
   consumos: (ConsumoProduto & { produto?: Produto })[]
@@ -45,6 +46,13 @@ export function ResumoFinanceiro({
   const totalLancamentos = lancamentos.reduce((sum, l) => sum + l.valor, 0)
   const totalPago = lancamentos.filter((l) => l.pago).reduce((sum, l) => sum + l.valor, 0)
   const totalPendente = totalLancamentos - totalPago
+
+  const pendentesMap = lancamentos.reduce<Record<string, typeof lancamentos>>((acc, l) => {
+    if (!l.pago && l.member_id) {
+      acc[l.member_id] = [...(acc[l.member_id] ?? []), l]
+    }
+    return acc
+  }, {})
 
   async function handleGerar() {
     setLoading(true)
@@ -131,6 +139,7 @@ export function ResumoFinanceiro({
                 <TableHead>Descrição</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>WhatsApp</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -146,6 +155,19 @@ export function ResumoFinanceiro({
                     <Badge variant={l.pago ? 'default' : 'secondary'} className="text-xs">
                       {l.pago ? 'Pago' : 'Pendente'}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {l.member_id && (() => {
+                      const memberObj = members.find((m) => m.id === l.member_id)
+                      if (!memberObj) return null
+                      return (
+                        <WhatsAppButton
+                          member={memberObj}
+                          lancamentos={pendentesMap[l.member_id] ?? []}
+                          sessao={sessao}
+                        />
+                      )
+                    })()}
                   </TableCell>
                 </TableRow>
               ))}
