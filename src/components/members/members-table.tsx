@@ -131,7 +131,7 @@ export function MembersTable({ members, allCargos, lancamentos }: MembersTablePr
                   <TableCell>
                     <WhatsAppButton
                       member={member}
-                      lancamentos={lancamentos.filter((l) => l.member_id === member.id)}
+                      lancamentos={lancamentos.filter((l) => l.member_id === member.id && !l.pago)}
                     />
                   </TableCell>
                   <TableCell className="text-right">
