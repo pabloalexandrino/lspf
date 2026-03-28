@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Member, Lancamento } from '@/lib/types'
+import { Member, LancamentoWithSessao } from '@/lib/types'
+import { WhatsAppButton } from '@/components/members/whatsapp-button'
 import { formatCurrency } from '@/lib/utils'
 import { marcarPagoLote } from '@/app/actions/financeiro'
 import { Button } from '@/components/ui/button'
@@ -15,7 +16,7 @@ import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 interface MemberWithLancamentos extends Member {
-  lancamentos: Lancamento[]
+  lancamentos: LancamentoWithSessao[]
 }
 
 interface MemberWalletsTableProps {
@@ -77,6 +78,7 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
               <TableHead>Débito Pendente</TableHead>
               <TableHead className="hidden md:table-cell">Total Pago</TableHead>
               <TableHead>Saldo</TableHead>
+              <TableHead>WhatsApp</TableHead>
               <TableHead className="text-right">Ação</TableHead>
             </TableRow>
           </TableHeader>
@@ -102,6 +104,12 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
                   >
                     {formatCurrency(m.saldo)}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <WhatsAppButton
+                    member={m}
+                    lancamentos={m.lancamentos.filter((l) => !l.pago)}
+                  />
                 </TableCell>
                 <TableCell className="text-right">
                   {m.debitoPendente > 0 && (

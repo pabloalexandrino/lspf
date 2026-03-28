@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { MemberWalletsTable } from '@/components/financeiro/member-wallets-table'
 import { Wallet } from 'lucide-react'
+import { LancamentoWithSessao } from '@/lib/types'
 
 export default async function MembrosWalletPage() {
   const supabase = await createClient()
@@ -13,13 +14,19 @@ export default async function MembrosWalletPage() {
 
   const memberIds = (members ?? []).map((m) => m.id)
 
-  const { data: lancamentos } = memberIds.length > 0
-    ? await supabase.from('lancamentos').select('*').in('member_id', memberIds).order('created_at', { ascending: false })
+  const { data: lancamentosRaw } = memberIds.length > 0
+    ? await supabase
+        .from('lancamentos')
+        .select('*, sessao:sessoes(data, descricao)')
+        .in('member_id', memberIds)
+        .order('created_at', { ascending: false })
     : { data: [] }
+
+  const lancamentos = (lancamentosRaw ?? []) as LancamentoWithSessao[]
 
   const membersWithLancamentos = (members ?? []).map((m) => ({
     ...m,
-    lancamentos: (lancamentos ?? []).filter((l) => l.member_id === m.id),
+    lancamentos: lancamentos.filter((l) => l.member_id === m.id),
   }))
 
   return (
