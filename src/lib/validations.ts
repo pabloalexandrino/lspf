@@ -60,3 +60,17 @@ export const saidaCaixaSchema = z.object({
 })
 
 export type SaidaCaixaFormData = z.infer<typeof saidaCaixaSchema>
+
+export const entradaCaixaSchema = z.object({
+  caixa_id: z.string().uuid('Caixa inválido'),
+  tipo: z.enum(['deposito', 'oferta', 'outro']),
+  descricao: z.string().min(1, 'Descrição obrigatória'),
+  valor: z.coerce.number().min(0.01, 'Valor deve ser maior que zero'),
+  data_pagamento: z.string().min(1, 'Data obrigatória'),
+  sessao_id: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().uuid().nullable().optional()
+  ),
+})
+
+export type EntradaCaixaFormData = z.infer<typeof entradaCaixaSchema>
