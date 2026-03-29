@@ -54,6 +54,13 @@ export function ResumoFinanceiro({
     return acc
   }, {})
 
+  const todosMap = lancamentos.reduce<Record<string, typeof lancamentos>>((acc, l) => {
+    if (l.member_id) {
+      acc[l.member_id] = [...(acc[l.member_id] ?? []), l]
+    }
+    return acc
+  }, {})
+
   async function handleGerar() {
     setLoading(true)
     const result = await gerarLancamentos(sessao.id)
@@ -163,7 +170,7 @@ export function ResumoFinanceiro({
                       return (
                         <WhatsAppButton
                           member={memberObj}
-                          lancamentos={pendentesMap[l.member_id] ?? []}
+                          lancamentos={todosMap[l.member_id] ?? []}
                           sessao={sessao}
                         />
                       )
