@@ -23,7 +23,7 @@ export function MemberSummary({ lancamentos, members }: MemberSummaryProps) {
   const byMember = members.map((member) => {
     const memberLancamentos = lancamentos.filter((l) => l.member_id === member.id)
     const totalPago = memberLancamentos.filter((l) => l.pago).reduce((s, l) => s + l.valor, 0)
-    const totalPendente = memberLancamentos.filter((l) => !l.pago).reduce((s, l) => s + l.valor, 0)
+    const totalPendente = memberLancamentos.filter((l) => !l.pago && !l.compensado).reduce((s, l) => s + l.valor, 0)
     return { member, lancamentos: memberLancamentos, totalPago, totalPendente }
   }).filter((g) => g.lancamentos.length > 0)
 
@@ -52,7 +52,7 @@ export function MemberSummary({ lancamentos, members }: MemberSummaryProps) {
     <div className="space-y-2">
       {byMember.map(({ member, lancamentos: mLancamentos, totalPago, totalPendente }) => {
         const isExpanded = expanded.has(member.id)
-        const pendingIds = mLancamentos.filter((l) => !l.pago).map((l) => l.id)
+        const pendingIds = mLancamentos.filter((l) => !l.pago && !l.compensado).map((l) => l.id)
 
         return (
           <div key={member.id} className="rounded-lg border border-border">
@@ -99,8 +99,11 @@ export function MemberSummary({ lancamentos, members }: MemberSummaryProps) {
                     </div>
                     <div className="flex items-center gap-2">
                       <span>{formatCurrency(l.valor)}</span>
-                      <Badge variant={l.pago ? 'default' : 'secondary'} className="text-xs">
-                        {l.pago ? 'Pago' : 'Pendente'}
+                      <Badge
+                        variant={l.pago ? 'default' : 'secondary'}
+                        className={l.compensado ? 'text-xs bg-muted text-muted-foreground' : 'text-xs'}
+                      >
+                        {l.pago ? 'Pago' : l.compensado ? 'Compensado' : 'Pendente'}
                       </Badge>
                     </div>
                   </div>
