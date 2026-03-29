@@ -189,10 +189,13 @@ export async function gerarLancamentos(sessaoId: string) {
       compensado: false,
       descricao: 'Compensação automática de crédito em carteira',
       caixa_id: null,
-      data_pagamento: new Date().toISOString().split('T')[0],
+      data_pagamento: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
     })
 
-    if (insertError) continue
+    if (insertError) {
+      console.error(`[compensacao] insert failed for member ${memberId} after update:`, insertError)
+      continue
+    }
   }
 
   // 6. Revalidate
