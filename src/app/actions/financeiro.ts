@@ -116,7 +116,82 @@ export async function gerarLancamentos(sessaoId: string) {
     if (error) return { error: error.message }
   }
 
-  // 5. Revalidate
+  // 5. Auto-compensate members who have available credit
+  const memberIdsWithDebits = [...new Set(lancamentos.map((l) => l.member_id))]
+
+  for (const memberId of memberIdsWithDebits) {
+    // Fetch all pago=true for this member (includes previous negative compensações)
+    const [{ data: credits }, { data: otherDebits }] = await Promise.all([
+      supabase
+        .from('lancamentos')
+        .select('valor')
+        .eq('member_id', memberId)
+        .eq('pago', true),
+      supabase
+        .from('lancamentos')
+        .select('valor')
+        .eq('member_id', memberId)
+        .eq('pago', false)
+        .eq('compensado', false)
+        .neq('sessao_id', sessaoId),
+    ])
+
+    const totalCredito = (credits ?? []).reduce((s, l) => s + Number(l.valor), 0)
+    const totalOtherDebits = (otherDebits ?? []).reduce((s, l) => s + Number(l.valor), 0)
+    const availableCredit = totalCredito - totalOtherDebits
+
+    if (availableCredit <= 0) continue
+
+    // Fetch just-inserted debits for this member+session, ordered by valor ASC
+    const { data: newDebits } = await supabase
+      .from('lancamentos')
+      .select('id, valor')
+      .eq('sessao_id', sessaoId)
+      .eq('member_id', memberId)
+      .eq('pago', false)
+      .eq('compensado', false)
+      .order('valor', { ascending: true })
+
+    if (!newDebits || newDebits.length === 0) continue
+
+    let remaining = availableCredit
+    const toCompensate: string[] = []
+
+    for (const debit of newDebits) {
+      const valor = Number(debit.valor)
+      if (remaining >= valor) {
+        toCompensate.push(debit.id)
+        remaining -= valor
+      }
+    }
+
+    if (toCompensate.length === 0) continue
+
+    const totalCompensado = Math.round(
+      newDebits
+        .filter((d) => toCompensate.includes(d.id))
+        .reduce((s, d) => s + Number(d.valor), 0) * 100
+    ) / 100
+
+    await Promise.all([
+      supabase
+        .from('lancamentos')
+        .update({ compensado: true })
+        .in('id', toCompensate),
+      supabase.from('lancamentos').insert({
+        sessao_id: sessaoId,
+        member_id: memberId,
+        tipo: 'compensacao',
+        valor: -totalCompensado,
+        pago: true,
+        compensado: false,
+        descricao: 'Compensação automática de crédito em carteira',
+        caixa_id: null,
+      }),
+    ])
+  }
+
+  // 6. Revalidate
   revalidatePath(`/sessoes/${sessaoId}`)
   revalidatePath('/financeiro')
   revalidatePath('/')
