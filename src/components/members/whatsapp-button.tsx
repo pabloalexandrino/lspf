@@ -8,7 +8,7 @@ import { format } from 'date-fns'
 
 interface WhatsAppButtonProps {
   member: Member
-  lancamentos: LancamentoWithSessao[]   // lançamentos pendentes (pago=false) desse membro
+  lancamentos: LancamentoWithSessao[]   // todos os lançamentos do membro (pago e pendentes)
   sessao?: Sessao                        // opcional: sessão de referência
 }
 
@@ -18,13 +18,15 @@ function gerarMensagemCobranca(
   sessao?: Sessao
 ): string {
   const primeiroNome = member.nome.split(' ')[0]
-  const pendentes = lancamentos.filter((l) => !l.pago)
+  const pendentes = lancamentos.filter((l) => !l.pago && !l.compensado)
 
   const agapes = pendentes.filter((l) => l.tipo === 'agape')
   const sessoesLanc = pendentes.filter((l) => l.tipo === 'sessao')
   const produtos = pendentes.filter((l) => l.tipo === 'produto')
 
-  const saldoTotal = pendentes.reduce((sum, l) => sum + l.valor, 0)
+  const creditos = lancamentos.filter((l) => l.pago).reduce((s, l) => s + l.valor, 0)
+  const debitos = pendentes.reduce((s, l) => s + l.valor, 0)
+  const saldoLiquido = creditos - debitos
 
   function formatarData(lancamento: LancamentoWithSessao): string {
     const dataStr = sessao?.data ?? lancamento.sessao?.data
@@ -49,7 +51,7 @@ function gerarMensagemCobranca(
     sessoesLanc.forEach((l) => {
       const dataRef = formatarData(l)
       const desc = l.descricao ?? `sessão de ${dataRef}`
-      linhas.push(`\nCusto da sessão: R$ ${formatarValor(l.valor)} (${desc})`)
+      linhas.push(`\nCusto da sessão ${dataRef}: R$ ${formatarValor(l.valor)} (${desc})`)
       linhas.push(`Dividido entre os presentes na sessão.`)
     })
   }
@@ -61,15 +63,21 @@ function gerarMensagemCobranca(
     })
   }
 
-  linhas.push(`\nSaldo na carteira: - R$ ${formatarValor(saldoTotal)}`)
-  linhas.push(`\nSegue chave pix: bardasabedoria@gmail.com`)
-  linhas.push(`\nAguardo comprovante de pagamento para dar baixa. TFA 🙏`)
+  if (saldoLiquido >= 0) {
+    linhas.push(`\nComo você tem saldo positivo de R$ ${formatarValor(creditos)} em carteira,`)
+    linhas.push(`o valor das cobranças (R$ ${formatarValor(debitos)}) será abatido do saldo.`)
+    linhas.push(`Saldo restante: R$ ${formatarValor(saldoLiquido)}`)
+  } else {
+    linhas.push(`\nSaldo na carteira: - R$ ${formatarValor(Math.abs(saldoLiquido))} (incluindo esta cobrança)`)
+    linhas.push(`\nSegue chave pix: bardasabedoria@gmail.com`)
+    linhas.push(`\nAguardo comprovante de pagamento para dar baixa. TFA`)
+  }
 
   return linhas.join('\n')
 }
 
 export function WhatsAppButton({ member, lancamentos, sessao }: WhatsAppButtonProps) {
-  const pendentes = lancamentos.filter((l) => !l.pago)
+  const pendentes = lancamentos.filter((l) => !l.pago && !l.compensado)
   const temWhatsapp = Boolean(member.whatsapp)
   const temDebitos = pendentes.length > 0
 
