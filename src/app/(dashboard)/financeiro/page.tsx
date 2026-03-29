@@ -34,12 +34,14 @@ export default async function FinanceiroPage() {
     .filter((l) => !l.pago && !l.compensado)
     .reduce((s, l) => s + l.valor, 0)
 
-  const totalPago = lancamentos.filter((l) => l.pago).reduce((s, l) => s + l.valor, 0)
+  const totalPago = lancamentos
+    .filter((l) => l.pago && l.tipo !== 'compensacao')
+    .reduce((s, l) => s + l.valor, 0)
 
   // Per-member saldo for dashboard breakdown
   const memberSaldos = (members ?? []).map((m) => {
     const mLanc = lancamentos.filter((l) => l.member_id === m.id)
-    const creditos = mLanc.filter((l) => l.pago).reduce((s, l) => s + l.valor, 0)
+    const creditos = mLanc.filter((l) => l.pago && l.tipo !== 'compensacao').reduce((s, l) => s + l.valor, 0)
     const debitos = mLanc.filter((l) => !l.pago && !l.compensado).reduce((s, l) => s + l.valor, 0)
     return creditos - debitos
   })
