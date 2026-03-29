@@ -173,22 +173,26 @@ export async function gerarLancamentos(sessaoId: string) {
         .reduce((s, d) => s + Number(d.valor), 0) * 100
     ) / 100
 
-    await Promise.all([
-      supabase
-        .from('lancamentos')
-        .update({ compensado: true })
-        .in('id', toCompensate),
-      supabase.from('lancamentos').insert({
-        sessao_id: sessaoId,
-        member_id: memberId,
-        tipo: 'compensacao',
-        valor: -totalCompensado,
-        pago: true,
-        compensado: false,
-        descricao: 'Compensação automática de crédito em carteira',
-        caixa_id: null,
-      }),
-    ])
+    const { error: updateError } = await supabase
+      .from('lancamentos')
+      .update({ compensado: true })
+      .in('id', toCompensate)
+
+    if (updateError) continue
+
+    const { error: insertError } = await supabase.from('lancamentos').insert({
+      sessao_id: sessaoId,
+      member_id: memberId,
+      tipo: 'compensacao',
+      valor: -totalCompensado,
+      pago: true,
+      compensado: false,
+      descricao: 'Compensação automática de crédito em carteira',
+      caixa_id: null,
+      data_pagamento: new Date().toISOString().split('T')[0],
+    })
+
+    if (insertError) continue
   }
 
   // 6. Revalidate
