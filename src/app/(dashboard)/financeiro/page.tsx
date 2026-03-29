@@ -30,8 +30,24 @@ export default async function FinanceiroPage() {
     sessao: (sessoes ?? []).find((s) => s.id === l.sessao_id),
   }))
 
-  const totalPendente = lancamentos.filter((l) => !l.pago).reduce((s, l) => s + l.valor, 0)
+  const totalPendente = lancamentos
+    .filter((l) => !l.pago && !l.compensado)
+    .reduce((s, l) => s + l.valor, 0)
+
   const totalPago = lancamentos.filter((l) => l.pago).reduce((s, l) => s + l.valor, 0)
+
+  // Per-member saldo for dashboard breakdown
+  const memberSaldos = (members ?? []).map((m) => {
+    const mLanc = lancamentos.filter((l) => l.member_id === m.id)
+    const creditos = mLanc.filter((l) => l.pago).reduce((s, l) => s + l.valor, 0)
+    const debitos = mLanc.filter((l) => !l.pago && !l.compensado).reduce((s, l) => s + l.valor, 0)
+    return creditos - debitos
+  })
+
+  const membrosComCredito = memberSaldos.filter((s) => s > 0)
+  const membrosDevedores = memberSaldos.filter((s) => s < 0)
+  const totalCreditoDisponivel = membrosComCredito.reduce((s, v) => s + v, 0)
+  const totalDevidoReal = membrosDevedores.reduce((s, v) => s + Math.abs(v), 0)
 
   return (
     <div className="space-y-6">
@@ -43,12 +59,23 @@ export default async function FinanceiroPage() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3">
         <div className="p-4 rounded-lg border border-border">
-          <p className="text-xs text-muted-foreground">Total Pendente</p>
+          <p className="text-xs text-muted-foreground">Pendente Real</p>
           <p className="text-xl font-bold text-destructive">{formatCurrency(totalPendente)}</p>
+          <p className="text-xs text-muted-foreground mt-1">{membrosDevedores.length} membros devedores</p>
         </div>
         <div className="p-4 rounded-lg border border-border">
           <p className="text-xs text-muted-foreground">Total Pago</p>
           <p className="text-xl font-bold text-green-500">{formatCurrency(totalPago)}</p>
+        </div>
+        <div className="p-4 rounded-lg border border-border">
+          <p className="text-xs text-muted-foreground">Créditos em Carteira</p>
+          <p className="text-xl font-bold text-blue-500">{formatCurrency(totalCreditoDisponivel)}</p>
+          <p className="text-xs text-muted-foreground mt-1">{membrosComCredito.length} membros c/ crédito</p>
+        </div>
+        <div className="p-4 rounded-lg border border-border">
+          <p className="text-xs text-muted-foreground">Total Devido</p>
+          <p className="text-xl font-bold text-orange-500">{formatCurrency(totalDevidoReal)}</p>
+          <p className="text-xs text-muted-foreground mt-1">{membrosDevedores.length} devedores</p>
         </div>
       </div>
 
