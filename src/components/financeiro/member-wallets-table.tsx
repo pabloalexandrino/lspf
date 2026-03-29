@@ -29,7 +29,8 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
 
-  const pendentes = sheetMember?.lancamentos.filter((l) => !l.pago) ?? []
+  const pendentesReais = sheetMember?.lancamentos.filter((l) => !l.pago && !l.compensado) ?? []
+  const compensados = sheetMember?.lancamentos.filter((l) => l.compensado) ?? []
 
   function toggleSelect(id: string) {
     setSelected((prev) => {
@@ -60,10 +61,9 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
   }
 
   const membersWithStats = members.map((m) => {
-    const debitoPendente = m.lancamentos.filter((l) => !l.pago).reduce((s, l) => s + l.valor, 0)
+    const debitoPendente = m.lancamentos.filter((l) => !l.pago && !l.compensado).reduce((s, l) => s + l.valor, 0)
     const totalPago = m.lancamentos.filter((l) => l.pago).reduce((s, l) => s + l.valor, 0)
-    const totalLancado = m.lancamentos.reduce((s, l) => s + l.valor, 0)
-    const saldo = totalPago - totalLancado
+    const saldo = totalPago - debitoPendente
     return { ...m, debitoPendente, totalPago, saldo }
   })
 
@@ -108,7 +108,7 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
                 <TableCell>
                   <WhatsAppButton
                     member={m}
-                    lancamentos={m.lancamentos.filter((l) => !l.pago)}
+                    lancamentos={m.lancamentos}
                   />
                 </TableCell>
                 <TableCell className="text-right">
@@ -137,12 +137,12 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
           </SheetHeader>
 
           <div className="mt-4 space-y-4">
-            {pendentes.length === 0 ? (
+            {pendentesReais.length === 0 && compensados.length === 0 ? (
               <p className="text-muted-foreground text-sm">Nenhum lançamento pendente.</p>
             ) : (
               <>
                 <div className="space-y-2">
-                  {pendentes.map((l) => (
+                  {pendentesReais.map((l) => (
                     <label
                       key={l.id}
                       className="flex items-center gap-3 p-2 rounded border border-border cursor-pointer hover:bg-secondary/50"
@@ -160,11 +160,26 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
                   ))}
                 </div>
 
+                {compensados.length > 0 && (
+                  <div className="pt-2 space-y-1">
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Compensados por crédito</p>
+                    {compensados.map((l) => (
+                      <div key={l.id} className="flex items-center justify-between p-2 rounded border border-border bg-muted/30">
+                        <div className="flex items-center gap-2 flex-1 text-sm">
+                          <Badge variant="secondary" className="text-xs bg-muted text-muted-foreground">Compensado</Badge>
+                          <span className="text-muted-foreground">{l.descricao ?? l.tipo}</span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">{formatCurrency(l.valor)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
                 <div className="border-t border-border pt-3 space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Selecionado:</span>
                     <span className="font-medium">
-                      {formatCurrency(pendentes.filter((l) => selected.has(l.id)).reduce((s, l) => s + l.valor, 0))}
+                      {formatCurrency(pendentesReais.filter((l) => selected.has(l.id)).reduce((s, l) => s + l.valor, 0))}
                     </span>
                   </div>
                   <Button
