@@ -14,6 +14,8 @@ export async function registrarDeposito(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autorizado' }
 
+  if (!valor || valor <= 0) return { error: 'Valor deve ser maior que zero' }
+
   // 1. Insert deposit lancamento
   const { error: depositError } = await supabase.from('lancamentos').insert({
     member_id: memberId,
@@ -52,14 +54,14 @@ export async function registrarDeposito(
 
   if (availableCredit > 0 && pendingDebits && pendingDebits.length > 0) {
     // 4. Compensate oldest debits first until credit exhausted
-    let remaining = availableCredit
+    let remainingCents = Math.round(availableCredit * 100)
     const toCompensate: string[] = []
 
     for (const debit of pendingDebits) {
-      const debitValor = Number(debit.valor)
-      if (remaining >= debitValor) {
+      const debitCents = Math.round(Number(debit.valor) * 100)
+      if (remainingCents >= debitCents) {
         toCompensate.push(debit.id)
-        remaining -= debitValor
+        remainingCents -= debitCents
       }
     }
 
@@ -78,7 +80,7 @@ export async function registrarDeposito(
 
       if (!updateError) {
         // 6. Insert compensacao lancamento (internal bookkeeping, caixa_id = null)
-        await supabase.from('lancamentos').insert({
+        const { error: compensacaoError } = await supabase.from('lancamentos').insert({
           member_id: memberId,
           sessao_id: null,
           tipo: 'compensacao',
@@ -89,6 +91,9 @@ export async function registrarDeposito(
           caixa_id: null,
           data_pagamento: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
         })
+        if (compensacaoError) {
+          console.error(`[deposito] compensacao insert failed for member ${memberId}:`, compensacaoError)
+        }
       }
     }
   }
