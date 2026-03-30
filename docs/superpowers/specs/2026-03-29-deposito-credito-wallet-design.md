@@ -110,15 +110,14 @@ registrarDeposito(memberId: string, valor: number, data: string, descricao: stri
 - Valores positivos em verde, negativos em vermelho
 
 **Cálculo do saldo acumulado:**
-```
-saldo_linha_n = sum(pago=true, exceto compensacao) até linha n
-              - sum(pago=false AND NOT compensado) até linha n
-```
 
-Na prática: percorrer lançamentos em ordem e acumular:
-- `tipo !== 'compensacao' && pago=true` → soma ao saldo
-- `pago=false && !compensado` → subtrai do saldo
-- `tipo='compensacao'` → ignorar (já refletido nos `compensado=true`)
+Percorrer lançamentos em `created_at ASC` e acumular:
+- `pago=true AND tipo !== 'compensacao'` → `+valor` (depósitos e pagamentos reais)
+- `pago=false AND !compensado` → `-valor` (débitos reais pendentes)
+- `tipo='compensacao'` → ignorar (lançamento interno de balanceamento)
+- `compensado=true` → ignorar (a dívida existe, mas está coberta pelo crédito)
+
+O saldo de cada linha é o acumulado até aquela linha. O saldo final coincide com o exibido na tabela de wallets.
 
 ---
 
@@ -140,9 +139,8 @@ Na prática: percorrer lançamentos em ordem e acumular:
 
 - Recebe nova prop `caixas: Caixa[]`
 - Botão "Ver extrato" em **todas** as linhas (não condicional a débito pendente)
-- Botão "+" (ícone) para depósito rápido na coluna de saldo
 - Remove Sheet inline (linhas 133–198)
-- Usa `<ExtratoSheet>` e `<DepositoSheet>`
+- Usa `<ExtratoSheet>` (que internamente abre `<DepositoSheet>`)
 
 ---
 
