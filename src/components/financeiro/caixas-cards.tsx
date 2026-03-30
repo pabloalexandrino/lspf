@@ -8,8 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ChevronDown, ChevronUp, Trash2 } from 'lucide-react'
 import { SaidaCaixaSheet } from './saida-caixa-sheet'
-import { EntradaCaixaSheet } from './entrada-caixa-sheet'
-import { excluirSaida, excluirEntrada } from '@/app/actions/saidas-caixa'
+import { excluirSaida } from '@/app/actions/saidas-caixa'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
@@ -43,7 +42,6 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
   }, [caixaExtrato, filterDe, filterAte])
 
   async function handleExcluirSaida(id: string) {
-    if (!window.confirm('Excluir esta saída de caixa? Esta ação não pode ser desfeita.')) return
     setDeletingId(id)
     const result = await excluirSaida(id)
     if (result?.error) {
@@ -55,32 +53,19 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
     setDeletingId(null)
   }
 
-  async function handleExcluirEntrada(id: string) {
-    if (!window.confirm('Excluir esta entrada de caixa? Esta ação não pode ser desfeita.')) return
-    setDeletingId(id)
-    const result = await excluirEntrada(id)
-    if (result?.error) {
-      toast.error(result.error)
-    } else {
-      toast.success('Entrada excluída')
-      router.refresh()
-    }
-    setDeletingId(null)
-  }
-
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {caixas.map((caixa) => {
           const entradas = caixa.lancamentos
-            .filter((l) => l.pago && l.tipo !== 'saida_caixa' && l.member_id === null)
+            .filter((l) => l.pago && l.tipo !== 'saida_caixa')
             .reduce((s, l) => s + l.valor, 0)
           const saidas = caixa.lancamentos
             .filter((l) => l.tipo === 'saida_caixa')
             .reduce((s, l) => s + l.valor, 0)
           const saldo = entradas - saidas
           const pendente = caixa.lancamentos
-            .filter((l) => !l.pago && l.tipo !== 'saida_caixa' && l.member_id === null)
+            .filter((l) => !l.pago && l.tipo !== 'saida_caixa')
             .reduce((s, l) => s + l.valor, 0)
           const isOpen = extratoCaixaId === caixa.id
 
@@ -105,10 +90,7 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <EntradaCaixaSheet caixa={caixa} sessoes={sessoes} />
-                  <SaidaCaixaSheet caixa={caixa} sessoes={sessoes} members={members} />
-                </div>
+                <SaidaCaixaSheet caixa={caixa} sessoes={sessoes} members={members} />
                 <Button
                   variant="outline"
                   size="sm"
@@ -181,7 +163,7 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
                             {isSaida ? 'saída' : l.tipo}
                           </Badge>
                         </TableCell>
-                        <TableCell className={`text-sm font-medium ${isSaida ? 'text-destructive' : l.pago ? 'text-green-500' : 'text-muted-foreground'}`}>
+                        <TableCell className={`text-sm font-medium ${isSaida ? 'text-destructive' : 'text-green-500'}`}>
                           {isSaida ? '— ' : '+ '}
                           {formatCurrency(l.valor)}
                         </TableCell>
@@ -205,16 +187,6 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
                               <Trash2 className="h-3 w-3 text-destructive" />
                             </Button>
                           )}
-                          {['deposito', 'oferta', 'outro'].includes(l.tipo) && l.member_id === null && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              disabled={deletingId === l.id}
-                              onClick={() => handleExcluirEntrada(l.id)}
-                            >
-                              <Trash2 className="h-3 w-3 text-muted-foreground" />
-                            </Button>
-                          )}
                         </TableCell>
                       </TableRow>
                     )
@@ -226,7 +198,7 @@ export function CaixasCards({ caixas, sessoes, members }: CaixasCardsProps) {
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{lancamentosFiltrados.length} lançamento(s)</span>
             <span>
-              Entradas: {formatCurrency(lancamentosFiltrados.filter(l => l.pago && l.tipo !== 'saida_caixa' && l.member_id === null).reduce((s, l) => s + l.valor, 0))}
+              Entradas: {formatCurrency(lancamentosFiltrados.filter(l => l.pago && l.tipo !== 'saida_caixa').reduce((s, l) => s + l.valor, 0))}
               {' | '}
               Saídas: {formatCurrency(lancamentosFiltrados.filter(l => l.tipo === 'saida_caixa').reduce((s, l) => s + l.valor, 0))}
             </span>
