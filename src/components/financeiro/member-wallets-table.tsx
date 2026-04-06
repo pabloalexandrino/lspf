@@ -1,17 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { Member, LancamentoWithSessao } from '@/lib/types'
+import { Member, Caixa, LancamentoWithSessao } from '@/lib/types'
 import { WhatsAppButton } from '@/components/members/whatsapp-button'
+import { DepositoSheet } from './deposito-sheet'
 import { formatCurrency } from '@/lib/utils'
-import { marcarPagoLote } from '@/app/actions/financeiro'
+import { marcarPagoLote, usarCreditoWallet } from '@/app/actions/financeiro'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from 'sonner'
-import { CheckCheck, Wallet } from 'lucide-react'
+import { CheckCheck, CreditCard, PlusCircle, Wallet } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
@@ -21,16 +22,44 @@ interface MemberWithLancamentos extends Member {
 
 interface MemberWalletsTableProps {
   members: MemberWithLancamentos[]
+  caixas: Caixa[]
 }
 
-export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
+export function MemberWalletsTable({ members, caixas }: MemberWalletsTableProps) {
   const router = useRouter()
   const [sheetMember, setSheetMember] = useState<MemberWithLancamentos | null>(null)
+  const [depositoMember, setDepositoMember] = useState<MemberWithLancamentos | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
 
+  // Pre-compute stats for all members (saldo is used for wallet credit check)
+  const membersWithStats = members.map((m) => {
+    const debitoPendente = m.lancamentos.filter((l) => !l.pago && !l.compensado).reduce((s, l) => s + l.valor, 0)
+    // Exclude 'compensacao' entries (negative bookkeeping) so the display shows actual cash/deposits paid
+    const totalPago = m.lancamentos.filter((l) => l.pago && l.tipo !== 'compensacao').reduce((s, l) => s + l.valor, 0)
+    // Saldo uses full credit (includes negative compensacoes) minus pending debts
+    // Wallet balance = only deposits and compensations (not cash payments like mensalidade)
+    const totalCredito = m.lancamentos
+      .filter((l) => l.pago && (l.tipo === 'deposito' || l.tipo === 'compensacao'))
+      .reduce((s, l) => s + l.valor, 0)
+    const saldo = totalCredito - debitoPendente
+    return { ...m, debitoPendente, totalPago, totalCredito, saldo }
+  })
+
   const pendentesReais = sheetMember?.lancamentos.filter((l) => !l.pago && !l.compensado) ?? []
   const compensados = sheetMember?.lancamentos.filter((l) => l.compensado) ?? []
+
+  // Gross wallet balance (sum of all pago=true entries, including negative compensacoes).
+  // We intentionally do NOT subtract pending debits here — pending debts haven't been
+  // deducted from the wallet yet. The wallet has this much cash available to compensate.
+  const creditoDisponivel = sheetMember
+    ? (membersWithStats.find((m) => m.id === sheetMember.id)?.totalCredito ?? 0)
+    : 0
+
+  // Total value of currently selected lancamentos
+  const valorSelecionado = pendentesReais
+    .filter((l) => selected.has(l.id))
+    .reduce((s, l) => s + l.valor, 0)
 
   function toggleSelect(id: string) {
     setSelected((prev) => {
@@ -60,12 +89,20 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
     setLoading(false)
   }
 
-  const membersWithStats = members.map((m) => {
-    const debitoPendente = m.lancamentos.filter((l) => !l.pago && !l.compensado).reduce((s, l) => s + l.valor, 0)
-    const totalPago = m.lancamentos.filter((l) => l.pago).reduce((s, l) => s + l.valor, 0)
-    const saldo = totalPago - debitoPendente
-    return { ...m, debitoPendente, totalPago, saldo }
-  })
+  // Handler for wallet credit flow — calls the Postgres function via server action
+  async function handleUsarCredito() {
+    if (selected.size === 0 || !sheetMember) return
+    setLoading(true)
+    const result = await usarCreditoWallet(sheetMember.id, Array.from(selected))
+    if (result?.error) {
+      toast.error(result.error)
+    } else {
+      toast.success(`${selected.size} lançamento(s) compensado(s) pelo crédito da wallet`)
+      setSheetMember(null)
+      router.refresh()
+    }
+    setLoading(false)
+  }
 
   return (
     <>
@@ -90,9 +127,9 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
                   {m.nome_historico ?? '—'}
                 </TableCell>
                 <TableCell className="text-sm">
-                  {m.debitoPendente > 0
-                    ? <span className="text-destructive">{formatCurrency(m.debitoPendente)}</span>
-                    : '—'}
+                  <span className={m.debitoPendente > 0 ? 'text-destructive' : 'text-muted-foreground'}>
+                    {formatCurrency(m.debitoPendente)}
+                  </span>
                 </TableCell>
                 <TableCell className="hidden md:table-cell text-sm text-green-500">
                   {formatCurrency(m.totalPago)}
@@ -112,23 +149,45 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
                   />
                 </TableCell>
                 <TableCell className="text-right">
-                  {m.debitoPendente > 0 && (
+                  <div className="flex items-center justify-end gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       className="text-xs"
-                      onClick={() => openSheet(m)}
+                      onClick={() => setDepositoMember(m)}
                     >
-                      <Wallet className="h-3 w-3 mr-1" />
-                      Registrar pagamento
+                      <PlusCircle className="h-3 w-3 mr-1" />
+                      Adicionar crédito
                     </Button>
-                  )}
+                    {m.debitoPendente > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => openSheet(m)}
+                      >
+                        <Wallet className="h-3 w-3 mr-1" />
+                        Registrar pagamento
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      {/* Deposito sheet — opens from "Adicionar crédito" button */}
+      {depositoMember && (
+        <DepositoSheet
+          member={depositoMember}
+          caixas={caixas}
+          depositos={depositoMember.lancamentos.filter((l) => l.tipo === 'deposito')}
+          open={!!depositoMember}
+          onOpenChange={(open) => { if (!open) setDepositoMember(null) }}
+        />
+      )}
 
       <Sheet open={!!sheetMember} onOpenChange={(open) => !open && setSheetMember(null)}>
         <SheetContent>
@@ -179,17 +238,39 @@ export function MemberWalletsTable({ members }: MemberWalletsTableProps) {
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Selecionado:</span>
                     <span className="font-medium">
-                      {formatCurrency(pendentesReais.filter((l) => selected.has(l.id)).reduce((s, l) => s + l.valor, 0))}
+                      {formatCurrency(valorSelecionado)}
                     </span>
                   </div>
-                  <Button
-                    className="w-full"
-                    disabled={selected.size === 0 || loading}
-                    onClick={handleRegistrarPagamento}
-                  >
-                    <CheckCheck className="h-4 w-4 mr-2" />
-                    {loading ? 'Registrando...' : `Confirmar ${selected.size} pagamento(s)`}
-                  </Button>
+                  <div className="space-y-2">
+                    <Button
+                      className="w-full"
+                      disabled={selected.size === 0 || loading}
+                      onClick={handleRegistrarPagamento}
+                    >
+                      <CheckCheck className="h-4 w-4 mr-2" />
+                      {loading ? 'Registrando...' : 'Pagar em dinheiro'}
+                    </Button>
+
+                    {creditoDisponivel > 0 && (
+                      <>
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          disabled={selected.size === 0 || loading || valorSelecionado > creditoDisponivel}
+                          onClick={handleUsarCredito}
+                        >
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          {loading ? 'Processando...' : 'Usar crédito da wallet'}
+                        </Button>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Crédito disponível: {formatCurrency(creditoDisponivel)}
+                          {valorSelecionado > creditoDisponivel && (
+                            <span className="text-destructive ml-1">— insuficiente para a seleção</span>
+                          )}
+                        </p>
+                      </>
+                    )}
+                  </div>
                 </div>
               </>
             )}
