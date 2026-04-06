@@ -8,18 +8,20 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 // then re-runs the auto-compensation algorithm with whatever deposits remain.
 async function _recomputarCompensacoes(supabase: SupabaseClient, memberId: string) {
   // 1. Delete all existing compensacao entries for this member
-  await supabase
+  const { error: deleteErr } = await supabase
     .from('lancamentos')
     .delete()
     .eq('member_id', memberId)
     .eq('tipo', 'compensacao')
+  if (deleteErr) { console.error('[deposito] delete compensacoes failed:', deleteErr); return }
 
   // 2. Reset all debits back to compensado=false
-  await supabase
+  const { error: resetErr } = await supabase
     .from('lancamentos')
     .update({ compensado: false })
     .eq('member_id', memberId)
     .eq('compensado', true)
+  if (resetErr) { console.error('[deposito] reset compensado failed:', resetErr); return }
 
   // 3. Fetch remaining credit (deposits only) and pending debits
   const [{ data: credits }, { data: pendingDebits }] = await Promise.all([
@@ -38,6 +40,9 @@ async function _recomputarCompensacoes(supabase: SupabaseClient, memberId: strin
       .order('created_at', { ascending: true }),
   ])
 
+  // Sum all deposits as gross credit. We can use the raw total (not totalCredito - pendingDebits)
+  // because we already wiped all compensacoes and reset compensado=false above — the loop
+  // runs against a clean slate where no debit has been previously compensated.
   const totalCredito = (credits ?? []).reduce((s: number, l: { valor: number }) => s + Number(l.valor), 0)
 
   if (totalCredito <= 0 || !pendingDebits || pendingDebits.length === 0) return
