@@ -29,7 +29,7 @@ export function DepositoSheet({ member, caixas, depositos, open, onOpenChange }:
   const [valor, setValor] = useState('')
   const [data, setData] = useState(today)
   const [descricao, setDescricao] = useState('Depósito antecipado')
-  const [caixaId, setCaixaId] = useState<string | null>('none')
+  const [caixaId, setCaixaId] = useState<string>('none')
   const [loading, setLoading] = useState(false)
 
   function resetForm() {
@@ -42,7 +42,7 @@ export function DepositoSheet({ member, caixas, depositos, open, onOpenChange }:
 
   function handleEditar(dep: Lancamento) {
     setEditingId(dep.id)
-    setValor(String(dep.valor))
+    setValor(Number(dep.valor).toFixed(2))
     setData(dep.data_pagamento ?? today)
     setDescricao(dep.descricao ?? '')
     setCaixaId(dep.caixa_id ?? 'none')
@@ -210,8 +210,8 @@ export function DepositoSheet({ member, caixas, depositos, open, onOpenChange }:
               <Label htmlFor="dep-caixa">Caixa</Label>
               <select
                 id="dep-caixa"
-                value={caixaId ?? 'none'}
-                onChange={(e) => setCaixaId(e.target.value === 'none' ? null : e.target.value)}
+                value={caixaId}
+                onChange={(e) => setCaixaId(e.target.value)}
                 className="w-full rounded-md border border-input bg-card text-foreground px-3 py-2 text-sm"
               >
                 <option value="none">— Nenhum —</option>
