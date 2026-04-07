@@ -80,8 +80,8 @@ export function CobrancaSheet({ members, open, onOpenChange }: CobrancaSheetProp
         <SheetHeader>
           <SheetTitle>Nova Cobrança</SheetTitle>
         </SheetHeader>
-        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <div className="space-y-1">
+        <form onSubmit={handleSubmit} className="space-y-5 px-6 pb-6 pt-4">
+          <div className="space-y-2">
             <Label htmlFor="cob-descricao">Descrição</Label>
             <Input
               id="cob-descricao"
@@ -91,7 +91,7 @@ export function CobrancaSheet({ members, open, onOpenChange }: CobrancaSheetProp
               required
             />
           </div>
-          <div className="space-y-1">
+          <div className="space-y-2">
             <Label htmlFor="cob-valor">Valor por membro (R$)</Label>
             <Input
               id="cob-valor"
