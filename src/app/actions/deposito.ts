@@ -6,14 +6,14 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 // Internal helper: wipes all compensacoes for a member, resets all compensado=false,
 // then re-runs the auto-compensation algorithm with whatever deposits remain.
-async function _recomputarCompensacoes(supabase: SupabaseClient, memberId: string) {
+async function _recomputarCompensacoes(supabase: SupabaseClient, memberId: string): Promise<string | null> {
   // 1. Delete all existing compensacao entries for this member
   const { error: deleteErr } = await supabase
     .from('lancamentos')
     .delete()
     .eq('member_id', memberId)
     .eq('tipo', 'compensacao')
-  if (deleteErr) { console.error('[deposito] delete compensacoes failed:', deleteErr); return }
+  if (deleteErr) { console.error('[deposito] delete compensacoes failed:', deleteErr); return deleteErr.message }
 
   // 2. Reset all debits back to compensado=false
   const { error: resetErr } = await supabase
@@ -21,7 +21,7 @@ async function _recomputarCompensacoes(supabase: SupabaseClient, memberId: strin
     .update({ compensado: false })
     .eq('member_id', memberId)
     .eq('compensado', true)
-  if (resetErr) { console.error('[deposito] reset compensado failed:', resetErr); return }
+  if (resetErr) { console.error('[deposito] reset compensado failed:', resetErr); return resetErr.message }
 
   // 3. Fetch remaining credit (deposits only) and pending debits
   const [{ data: credits }, { data: pendingDebits }] = await Promise.all([
@@ -45,7 +45,7 @@ async function _recomputarCompensacoes(supabase: SupabaseClient, memberId: strin
   // runs against a clean slate where no debit has been previously compensated.
   const totalCredito = (credits ?? []).reduce((s: number, l: { valor: number }) => s + Number(l.valor), 0)
 
-  if (totalCredito <= 0 || !pendingDebits || pendingDebits.length === 0) return
+  if (totalCredito <= 0 || !pendingDebits || pendingDebits.length === 0) return null
 
   // 4. Compensate oldest debits first until credit is exhausted
   let remainingCents = Math.round(totalCredito * 100)
@@ -59,7 +59,7 @@ async function _recomputarCompensacoes(supabase: SupabaseClient, memberId: strin
     }
   }
 
-  if (toCompensate.length === 0) return
+  if (toCompensate.length === 0) return null
 
   const totalCompensado =
     Math.round(
@@ -89,6 +89,8 @@ async function _recomputarCompensacoes(supabase: SupabaseClient, memberId: strin
       console.error(`[deposito] compensacao insert failed for member ${memberId}:`, compensacaoError)
     }
   }
+
+  return null
 }
 
 function _revalidar(memberId: string) {
@@ -125,7 +127,8 @@ export async function registrarDeposito(
 
   if (depositError) return { error: depositError.message }
 
-  await _recomputarCompensacoes(supabase, memberId)
+  const recomputeErr = await _recomputarCompensacoes(supabase, memberId)
+  if (recomputeErr) return { error: recomputeErr }
   _revalidar(memberId)
   return { success: true }
 }
@@ -153,7 +156,8 @@ export async function editarDeposito(
 
   if (updateError) return { error: updateError.message }
 
-  await _recomputarCompensacoes(supabase, memberId)
+  const recomputeErr = await _recomputarCompensacoes(supabase, memberId)
+  if (recomputeErr) return { error: recomputeErr }
   _revalidar(memberId)
   return { success: true }
 }
@@ -175,7 +179,8 @@ export async function excluirDeposito(
 
   if (deleteError) return { error: deleteError.message }
 
-  await _recomputarCompensacoes(supabase, memberId)
+  const recomputeErr = await _recomputarCompensacoes(supabase, memberId)
+  if (recomputeErr) return { error: recomputeErr }
   _revalidar(memberId)
   return { success: true }
 }

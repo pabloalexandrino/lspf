@@ -183,7 +183,7 @@ export function MemberWalletsTable({ members, caixas }: MemberWalletsTableProps)
         <DepositoSheet
           member={depositoMember}
           caixas={caixas}
-          depositos={depositoMember.lancamentos.filter((l) => l.tipo === 'deposito')}
+          depositos={depositoMember.lancamentos.filter((l) => l.tipo === 'deposito').slice().reverse()}
           open={!!depositoMember}
           onOpenChange={(open) => { if (!open) setDepositoMember(null) }}
         />
