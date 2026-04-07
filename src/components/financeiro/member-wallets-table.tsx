@@ -49,7 +49,7 @@ export function MemberWalletsTable({ members, caixas }: MemberWalletsTableProps)
   const compensados = sheetMember?.lancamentos.filter((l) => l.compensado) ?? []
 
   const creditoDisponivel = sheetMember
-    ? (membersWithStats.find((m) => m.id === sheetMember.id)?.totalCredito ?? 0)
+    ? (membersWithStats.find((m) => m.id === sheetMember.id)?.saldo ?? 0)
     : 0
 
   const valorSelecionado = pendentesReais
