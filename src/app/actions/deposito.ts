@@ -73,21 +73,25 @@ async function _recomputarCompensacoes(supabase: SupabaseClient, memberId: strin
     .update({ compensado: true })
     .in('id', toCompensate)
 
-  if (!updateError) {
-    const { error: compensacaoError } = await supabase.from('lancamentos').insert({
-      member_id: memberId,
-      sessao_id: null,
-      tipo: 'compensacao',
-      valor: -totalCompensado,
-      pago: true,
-      compensado: false,
-      descricao: 'Compensação automática de crédito em carteira',
-      caixa_id: null,
-      data_pagamento: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
-    })
-    if (compensacaoError) {
-      console.error(`[deposito] compensacao insert failed for member ${memberId}:`, compensacaoError)
-    }
+  if (updateError) {
+    console.error('[deposito] mark compensado=true failed:', updateError)
+    return updateError.message
+  }
+
+  const { error: compensacaoError } = await supabase.from('lancamentos').insert({
+    member_id: memberId,
+    sessao_id: null,
+    tipo: 'compensacao',
+    valor: -totalCompensado,
+    pago: true,
+    compensado: false,
+    descricao: 'Compensação automática de crédito em carteira',
+    caixa_id: null,
+    data_pagamento: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
+  })
+  if (compensacaoError) {
+    console.error(`[deposito] compensacao insert failed for member ${memberId}:`, compensacaoError)
+    return compensacaoError.message
   }
 
   return null
