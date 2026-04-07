@@ -24,7 +24,10 @@ function gerarMensagemCobranca(
   const sessoesLanc = pendentes.filter((l) => l.tipo === 'sessao')
   const produtos = pendentes.filter((l) => l.tipo === 'produto')
 
-  const creditos = lancamentos.filter((l) => l.pago).reduce((s, l) => s + l.valor, 0)
+  // Wallet balance = only deposits and compensations (not cash payments like mensalidade)
+  const creditos = lancamentos
+    .filter((l) => l.pago && (l.tipo === 'deposito' || l.tipo === 'compensacao'))
+    .reduce((s, l) => s + l.valor, 0)
   const debitos = pendentes.reduce((s, l) => s + l.valor, 0)
   const saldoLiquido = creditos - debitos
 

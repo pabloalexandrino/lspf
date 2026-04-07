@@ -11,7 +11,6 @@ import { redirect } from 'next/navigation'
 async function PresencaChartServer() {
   const supabase = await createClient()
 
-  // Get last 6 sessions with presence count
   const { data: sessoes } = await supabase
     .from('sessoes')
     .select('id, data')
@@ -51,27 +50,39 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <LayoutDashboard className="h-5 w-5 text-primary" />
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <LayoutDashboard className="h-4 w-4 text-primary" />
+        </div>
+        <h1 className="text-xl font-bold">Dashboard</h1>
       </div>
 
-      <Suspense fallback={<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-        {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-20" />)}
-      </div>}>
+      <Suspense fallback={
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+          {Array.from({ length: 7 }).map((_, i) => <Skeleton key={i} className="h-[76px] rounded-xl" />)}
+        </div>
+      }>
         <MetricsCards />
       </Suspense>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-lg border border-border p-4">
-          <h2 className="text-sm font-medium mb-4">Presença nas Últimas 6 Sessões</h2>
-          <Suspense fallback={<Skeleton className="h-48 w-full" />}>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-border/60 bg-card p-4 hover:border-border transition-colors">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+            Presença — Últimas 6 Sessões
+          </h2>
+          <Suspense fallback={<Skeleton className="h-48 w-full rounded-lg" />}>
             <PresencaChartServer />
           </Suspense>
         </div>
 
-        <div className="rounded-lg border border-border p-4">
-          <h2 className="text-sm font-medium mb-4">Top 5 Maiores Devedores</h2>
-          <Suspense fallback={<div className="space-y-2">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10" />)}</div>}>
+        <div className="rounded-xl border border-border/60 bg-card p-4 hover:border-border transition-colors">
+          <h2 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-4">
+            Top 5 Maiores Devedores
+          </h2>
+          <Suspense fallback={
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-10 rounded-lg" />)}
+            </div>
+          }>
             <TopDebtors />
           </Suspense>
         </div>

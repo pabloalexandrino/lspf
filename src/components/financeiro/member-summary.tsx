@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { ChevronDown, ChevronRight, CheckCheck } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 type LancamentoEnriched = Lancamento & { member?: Member }
 
@@ -55,27 +56,33 @@ export function MemberSummary({ lancamentos, members }: MemberSummaryProps) {
         const pendingIds = mLancamentos.filter((l) => !l.pago && !l.compensado).map((l) => l.id)
 
         return (
-          <div key={member.id} className="rounded-lg border border-border">
+          <div key={member.id} className="rounded-xl border border-border/60 bg-card overflow-hidden hover:border-border transition-colors duration-200">
             <div
-              className="flex items-center justify-between p-3 cursor-pointer hover:bg-secondary/30"
+              className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-white/[0.02] transition-colors"
               onClick={() => toggleExpand(member.id)}
             >
-              <div className="flex items-center gap-2">
-                {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                <span className="font-medium">{member.nome}</span>
+              <div className="flex items-center gap-2.5">
+                <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center text-[11px] font-bold text-muted-foreground shrink-0">
+                  {member.nome.charAt(0).toUpperCase()}
+                </div>
+                <span className="text-sm font-medium">{member.nome}</span>
+                {isExpanded
+                  ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground/50" />
+                  : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+                }
               </div>
-              <div className="flex items-center gap-3 text-sm">
+              <div className="flex items-center gap-3">
                 {totalPago > 0 && (
-                  <span className="text-green-500">+{formatCurrency(totalPago)} pago</span>
+                  <span className="text-[11px] text-emerald-400 font-medium">+{formatCurrency(totalPago)}</span>
                 )}
                 {totalPendente > 0 && (
-                  <span className="text-destructive">{formatCurrency(totalPendente)} pendente</span>
+                  <span className="text-[11px] text-destructive font-medium">{formatCurrency(totalPendente)} pend.</span>
                 )}
                 {pendingIds.length > 0 && (
                   <Button
                     size="sm"
                     variant="outline"
-                    className="h-7 text-xs"
+                    className="h-6 text-[11px] px-2 border-border/60"
                     disabled={loading === member.id}
                     onClick={(e) => {
                       e.stopPropagation()
@@ -83,31 +90,38 @@ export function MemberSummary({ lancamentos, members }: MemberSummaryProps) {
                     }}
                   >
                     <CheckCheck className="h-3 w-3 mr-1" />
-                    Quitar tudo
+                    Quitar
                   </Button>
                 )}
               </div>
             </div>
 
             {isExpanded && (
-              <div className="border-t border-border p-3 space-y-1">
-                {mLancamentos.map((l) => (
-                  <div key={l.id} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="text-xs capitalize">{l.tipo}</Badge>
-                      <span className="text-muted-foreground">{l.descricao}</span>
+              <div className="border-t border-border/40 px-4 py-3 space-y-1.5 bg-secondary/20">
+                {mLancamentos.map((l) => {
+                  const settled = l.pago || l.compensado
+                  const statusLabel = l.pago ? 'Pago' : l.compensado ? 'Compensado' : 'Pendente'
+                  const statusClass = settled
+                    ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-500'
+                    : 'border-yellow-500/30 bg-yellow-500/5 text-yellow-500'
+                  const valorClass = (['deposito', 'oferta', 'compensacao'].includes(l.tipo) || settled)
+                    ? (l.tipo === 'compensacao' ? 'text-muted-foreground' : 'text-emerald-400')
+                    : 'text-destructive'
+                  return (
+                    <div key={l.id} className="flex items-center justify-between text-sm py-0.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Badge variant="secondary" className="text-[10px] capitalize shrink-0">{l.tipo}</Badge>
+                        <span className="text-muted-foreground text-xs truncate">{l.descricao}</span>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className={cn('text-xs font-medium', valorClass)}>{formatCurrency(l.valor)}</span>
+                        <Badge variant="outline" className={cn('text-[10px]', statusClass)}>
+                          {statusLabel}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span>{formatCurrency(l.valor)}</span>
-                      <Badge
-                        variant={l.pago ? 'default' : 'secondary'}
-                        className={l.compensado ? 'text-xs bg-muted text-muted-foreground' : 'text-xs'}
-                      >
-                        {l.pago ? 'Pago' : l.compensado ? 'Compensado' : 'Pendente'}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

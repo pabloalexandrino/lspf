@@ -109,7 +109,7 @@ export function LancamentosTable({ lancamentos, members, sessoes, caixas }: Lanc
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 items-center">
         <Select value={filterMember} onValueChange={(v) => setFilterMember(v ?? 'all')}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Membro" />
@@ -184,7 +184,7 @@ export function LancamentosTable({ lancamentos, members, sessoes, caixas }: Lanc
       </div>
 
       {/* Table */}
-      <div className="rounded-md border border-border overflow-x-auto">
+      <div className="rounded-xl border border-border/60 overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
@@ -214,7 +214,7 @@ export function LancamentosTable({ lancamentos, members, sessoes, caixas }: Lanc
               filtered.map((l) => {
                 const status = statusInfo(l)
                 return (
-                <TableRow key={l.id} className={(l.pago || l.compensado) ? 'opacity-60' : ''}>
+                <TableRow key={l.id} className={(l.pago || l.compensado) ? 'opacity-50 hover:opacity-70 border-border/30' : 'hover:bg-white/[0.02] border-border/30'}>
                   <TableCell>
                     <Checkbox
                       checked={selected.has(l.id)}
@@ -260,7 +260,7 @@ export function LancamentosTable({ lancamentos, members, sessoes, caixas }: Lanc
         </Table>
       </div>
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-[11px] text-muted-foreground/70">
         {filtered.length} lançamento(s) — Total: {formatCurrency(filtered.reduce((s, l) => s + l.valor, 0))} — Pendente: {formatCurrency(filtered.filter((l) => !l.pago && !l.compensado).reduce((s, l) => s + l.valor, 0))}
       </p>
     </div>

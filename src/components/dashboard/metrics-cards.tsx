@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Users, Calendar, AlertTriangle, DollarSign, Clock, Landmark, Coins } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export async function MetricsCards() {
   const supabase = await createClient()
@@ -55,55 +56,67 @@ export async function MetricsCards() {
       title: 'Membros Ativos',
       value: String(totalAtivos ?? 0),
       icon: Users,
-      color: 'text-primary',
+      iconColor: 'text-blue-400',
+      iconBg: 'bg-blue-500/10',
     },
     {
       title: 'Sessões no Mês',
       value: String(sessoesNoMes ?? 0),
       icon: Calendar,
-      color: 'text-blue-400',
+      iconColor: 'text-indigo-400',
+      iconBg: 'bg-indigo-500/10',
     },
     {
       title: 'Inadimplentes',
       value: String(totalInadimplentes),
       icon: AlertTriangle,
-      color: 'text-yellow-500',
+      iconColor: 'text-yellow-500',
+      iconBg: 'bg-yellow-500/10',
     },
     {
       title: 'Valor Pendente',
       value: formatCurrency(totalValorPendente),
       icon: DollarSign,
-      color: 'text-destructive',
+      iconColor: 'text-red-400',
+      iconBg: 'bg-red-500/10',
     },
     {
       title: 'Próxima Sessão',
       value: proximaSessao?.[0]?.data ? formatDate(proximaSessao[0].data) : '—',
       icon: Clock,
-      color: 'text-green-400',
+      iconColor: 'text-emerald-400',
+      iconBg: 'bg-emerald-500/10',
     },
     {
       title: 'Bar da Sabedoria',
       value: formatCurrency(saldoBar),
       icon: Coins,
-      color: 'text-amber-500',
+      iconColor: 'text-amber-400',
+      iconBg: 'bg-amber-500/10',
     },
     {
       title: 'Caixa da Loja',
       value: formatCurrency(saldoLoja),
       icon: Landmark,
-      color: 'text-violet-400',
+      iconColor: 'text-violet-400',
+      iconBg: 'bg-violet-500/10',
     },
   ]
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
       {cards.map((card) => (
-        <div key={card.title} className="p-4 rounded-lg border border-border bg-card space-y-2">
-          <div className="flex items-center gap-2">
-            <card.icon className={`h-4 w-4 ${card.color}`} />
-            <span className="text-xs text-muted-foreground">{card.title}</span>
+        <div
+          key={card.title}
+          className="p-4 rounded-xl border border-border/60 bg-card hover:border-border transition-colors duration-200 space-y-3"
+        >
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] text-muted-foreground font-medium leading-tight">{card.title}</span>
+            <div className={cn('h-7 w-7 rounded-lg flex items-center justify-center shrink-0', card.iconBg)}>
+              <card.icon className={cn('h-3.5 w-3.5', card.iconColor)} />
+            </div>
           </div>
-          <p className="text-xl font-bold">{card.value}</p>
+          <p className="text-xl font-bold tracking-tight leading-none">{card.value}</p>
         </div>
       ))}
     </div>

@@ -9,8 +9,11 @@ export default async function MembrosWalletPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: members } = await supabase
-    .from('members').select('*').eq('ativo', true).order('nome')
+  // Fetch members and active caixas in parallel
+  const [{ data: members }, { data: caixas }] = await Promise.all([
+    supabase.from('members').select('*').eq('ativo', true).order('nome'),
+    supabase.from('caixas').select('*').eq('ativo', true).order('nome'),
+  ])
 
   const memberIds = (members ?? []).map((m) => m.id)
 
@@ -35,7 +38,7 @@ export default async function MembrosWalletPage() {
         <Wallet className="h-5 w-5 text-primary" />
         <h1 className="text-2xl font-bold">Wallets dos Membros</h1>
       </div>
-      <MemberWalletsTable members={membersWithLancamentos} />
+      <MemberWalletsTable members={membersWithLancamentos} caixas={caixas ?? []} />
     </div>
   )
 }

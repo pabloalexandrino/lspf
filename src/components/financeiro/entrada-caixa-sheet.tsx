@@ -1,8 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { Caixa, Sessao } from '@/lib/types'
+import { Caixa, Member, Sessao } from '@/lib/types'
 import { registrarEntrada } from '@/app/actions/saidas-caixa'
+import { registrarDeposito } from '@/app/actions/deposito'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,6 +15,7 @@ import { useRouter } from 'next/navigation'
 interface EntradaCaixaSheetProps {
   caixa: Caixa
   sessoes: Pick<Sessao, 'id' | 'data' | 'descricao'>[]
+  members?: Pick<Member, 'id' | 'nome'>[]
 }
 
 function today(): string {
@@ -21,7 +23,7 @@ function today(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export function EntradaCaixaSheet({ caixa, sessoes }: EntradaCaixaSheetProps) {
+export function EntradaCaixaSheet({ caixa, sessoes, members }: EntradaCaixaSheetProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -30,6 +32,7 @@ export function EntradaCaixaSheet({ caixa, sessoes }: EntradaCaixaSheetProps) {
   const [valor, setValor] = useState('')
   const [dataPagamento, setDataPagamento] = useState(today())
   const [sessaoId, setSessaoId] = useState('')
+  const [memberId, setMemberId] = useState('')
 
   function resetForm() {
     setTipo('deposito')
@@ -37,20 +40,33 @@ export function EntradaCaixaSheet({ caixa, sessoes }: EntradaCaixaSheetProps) {
     setValor('')
     setDataPagamento(today())
     setSessaoId('')
+    setMemberId('')
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
 
-    const result = await registrarEntrada({
-      caixa_id: caixa.id,
-      tipo,
-      descricao,
-      valor,
-      data_pagamento: dataPagamento,
-      sessao_id: sessaoId || undefined,
-    })
+    // When tipo is 'deposito' and a member is selected, register as wallet deposit
+    let result
+    if (tipo === 'deposito' && memberId) {
+      result = await registrarDeposito(
+        memberId,
+        parseFloat(valor),
+        dataPagamento,
+        descricao || 'Depósito antecipado',
+        caixa.id
+      )
+    } else {
+      result = await registrarEntrada({
+        caixa_id: caixa.id,
+        tipo,
+        descricao,
+        valor,
+        data_pagamento: dataPagamento,
+        sessao_id: sessaoId || undefined,
+      })
+    }
 
     if (result?.error) {
       toast.error(result.error)
@@ -89,13 +105,31 @@ export function EntradaCaixaSheet({ caixa, sessoes }: EntradaCaixaSheetProps) {
                 id="tipo"
                 value={tipo}
                 onChange={(e) => setTipo(e.target.value as 'deposito' | 'oferta' | 'outro')}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-card text-foreground px-3 py-2 text-sm"
               >
                 <option value="deposito">Depósito</option>
                 <option value="oferta">Oferta</option>
                 <option value="outro">Outro</option>
               </select>
             </div>
+
+            {/* Optional member selector — only shown when tipo is 'deposito' */}
+            {tipo === 'deposito' && members && members.length > 0 && (
+              <div className="space-y-2">
+                <Label htmlFor="member_id">Membro (opcional)</Label>
+                <select
+                  id="member_id"
+                  value={memberId}
+                  onChange={(e) => setMemberId(e.target.value)}
+                  className="w-full rounded-md border border-input bg-card text-foreground px-3 py-2 text-sm"
+                >
+                  <option value="">— Nenhum —</option>
+                  {members.map((m) => (
+                    <option key={m.id} value={m.id}>{m.nome}</option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="descricao">Descrição *</Label>
@@ -139,7 +173,7 @@ export function EntradaCaixaSheet({ caixa, sessoes }: EntradaCaixaSheetProps) {
                 id="sessao_id"
                 value={sessaoId}
                 onChange={(e) => setSessaoId(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-card text-foreground px-3 py-2 text-sm"
               >
                 <option value="">— Nenhuma —</option>
                 {sessoes.map((s) => (

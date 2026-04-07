@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Lancamento, MemberWithCargos, PresencaSessao, PresencaAgape, ConsumoProduto, Produto, Sessao, Member } from '@/lib/types'
+import { Lancamento, LancamentoWithSessao, MemberWithCargos, PresencaSessao, PresencaAgape, ConsumoProduto, Produto, Sessao, Member } from '@/lib/types'
 import { WhatsAppButton } from '@/components/members/whatsapp-button'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,7 @@ interface ResumoFinanceiroProps {
   presencasAgape: PresencaAgape[]
   consumos: (ConsumoProduto & { produto?: Produto })[]
   lancamentos: (Lancamento & { member?: Member })[]
+  allLancamentos: LancamentoWithSessao[]
 }
 
 export function ResumoFinanceiro({
@@ -27,6 +28,7 @@ export function ResumoFinanceiro({
   presencasAgape,
   consumos,
   lancamentos,
+  allLancamentos,
 }: ResumoFinanceiroProps) {
   const [loading, setLoading] = useState(false)
 
@@ -55,6 +57,14 @@ export function ResumoFinanceiro({
   }, {})
 
   const todosMap = lancamentos.reduce<Record<string, typeof lancamentos>>((acc, l) => {
+    if (l.member_id) {
+      acc[l.member_id] = [...(acc[l.member_id] ?? []), l]
+    }
+    return acc
+  }, {})
+
+  // Full lancamento history per member (all sessions) — used for correct wallet saldo in WhatsApp messages
+  const allLancamentosMap = allLancamentos.reduce<Record<string, LancamentoWithSessao[]>>((acc, l) => {
     if (l.member_id) {
       acc[l.member_id] = [...(acc[l.member_id] ?? []), l]
     }
@@ -157,11 +167,19 @@ export function ResumoFinanceiro({
                     <Badge variant="secondary" className="text-xs">{l.tipo}</Badge>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{l.descricao}</TableCell>
-                  <TableCell className="text-sm">{formatCurrency(l.valor)}</TableCell>
+                  <TableCell className={`text-sm font-medium ${(!l.pago && !l.compensado) ? 'text-destructive' : 'text-green-500'}`}>
+                    {formatCurrency(l.valor)}
+                  </TableCell>
                   <TableCell>
-                    <Badge variant={l.pago ? 'default' : 'secondary'} className="text-xs">
-                      {l.pago ? 'Pago' : 'Pendente'}
-                    </Badge>
+                    {l.pago || l.compensado ? (
+                      <Badge variant="outline" className="text-xs border-green-500/40 bg-green-500/10 text-green-600">
+                        {l.compensado && !l.pago ? 'Compensado' : 'Pago'}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs border-yellow-500/40 bg-yellow-500/10 text-yellow-600">
+                        Pendente
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
                     {l.member_id && (() => {
@@ -170,7 +188,7 @@ export function ResumoFinanceiro({
                       return (
                         <WhatsAppButton
                           member={memberObj}
-                          lancamentos={todosMap[l.member_id] ?? []}
+                          lancamentos={allLancamentosMap[l.member_id] ?? todosMap[l.member_id] ?? []}
                           sessao={sessao}
                         />
                       )

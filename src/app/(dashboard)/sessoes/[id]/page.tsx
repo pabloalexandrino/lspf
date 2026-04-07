@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
-import { MemberWithCargos } from '@/lib/types'
+import { MemberWithCargos, LancamentoWithSessao } from '@/lib/types'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PresencaList } from '@/components/sessoes/presenca-list'
 import { AgapeList } from '@/components/sessoes/agape-list'
@@ -30,6 +30,7 @@ export default async function SessaoDetailPage({ params }: PageProps) {
     { data: consumosRaw },
     { data: lancamentosRaw },
     { data: tronco },
+    { data: allLancamentosRaw },
   ] = await Promise.all([
     supabase.from('sessoes').select('*').eq('id', id).single(),
     supabase.from('members').select('*, member_cargos(id, cargo_id, cargos(*))').order('nome').eq('ativo', true),
@@ -39,6 +40,7 @@ export default async function SessaoDetailPage({ params }: PageProps) {
     supabase.from('consumo_produtos').select('*, produto:produtos(*)').eq('sessao_id', id),
     supabase.from('lancamentos').select('*, member:members(*)').eq('sessao_id', id),
     supabase.from('tronco_solidariedade').select('*').eq('sessao_id', id).maybeSingle(),
+    supabase.from('lancamentos').select('*, sessao:sessoes(data, descricao)'),
   ])
 
   if (!sessao) notFound()
@@ -52,6 +54,8 @@ export default async function SessaoDetailPage({ params }: PageProps) {
     ...l,
     member: l.member as { id: string; nome: string } | undefined,
   }))
+
+  const allLancamentos = (allLancamentosRaw ?? []) as LancamentoWithSessao[]
 
   return (
     <div className="space-y-6">
@@ -93,7 +97,7 @@ export default async function SessaoDetailPage({ params }: PageProps) {
         </TabsContent>
 
         <TabsContent value="financeiro" className="mt-4">
-          <ResumoFinanceiro sessao={sessao} members={(members ?? []) as MemberWithCargos[]} presencasSessao={presencasSessao ?? []} presencasAgape={presencasAgape ?? []} consumos={consumos} lancamentos={lancamentos} />
+          <ResumoFinanceiro sessao={sessao} members={(members ?? []) as MemberWithCargos[]} presencasSessao={presencasSessao ?? []} presencasAgape={presencasAgape ?? []} consumos={consumos} lancamentos={lancamentos} allLancamentos={allLancamentos} />
         </TabsContent>
 
         <TabsContent value="tronco" className="mt-4">

@@ -85,7 +85,6 @@ export async function excluirEntrada(id: string) {
     .delete()
     .eq('id', id)
     .in('tipo', ['deposito', 'oferta', 'outro'])
-    .is('member_id', null)
 
   if (error) return { error: error.message }
 

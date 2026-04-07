@@ -126,7 +126,7 @@ export function SaidaCaixaSheet({ caixa, sessoes, members }: SaidaCaixaSheetProp
                 id="sessao_id"
                 value={sessaoId}
                 onChange={(e) => setSessaoId(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-card text-foreground px-3 py-2 text-sm"
               >
                 <option value="">— Nenhuma —</option>
                 {sessoes.map((s) => (
@@ -143,7 +143,7 @@ export function SaidaCaixaSheet({ caixa, sessoes, members }: SaidaCaixaSheetProp
                 id="member_id"
                 value={memberId}
                 onChange={(e) => setMemberId(e.target.value)}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                className="w-full rounded-md border border-input bg-card text-foreground px-3 py-2 text-sm"
               >
                 <option value="">— Nenhum —</option>
                 {members.map((m) => (
