@@ -40,7 +40,7 @@ export function LancamentosTable({ lancamentos, members, sessoes, caixas }: Lanc
       if (filterMember !== 'all' && l.member_id !== filterMember) return false
       if (filterTipo !== 'all' && l.tipo !== filterTipo) return false
       if (filterStatus === 'pago' && !l.pago) return false
-      if (filterStatus === 'pendente' && l.pago) return false
+      if (filterStatus === 'pendente' && (l.pago || l.compensado)) return false
       if (filterSessao !== 'all' && l.sessao_id !== filterSessao) return false
       if (filterCaixa !== 'all' && l.caixa_id !== filterCaixa) return false
       return true
@@ -91,6 +91,19 @@ export function LancamentosTable({ lancamentos, members, sessoes, caixas }: Lanc
     if (tipo === 'sessao') return 'secondary'
     if (tipo === 'agape') return 'default'
     return 'outline'
+  }
+
+  function statusInfo(l: LancamentoEnriched) {
+    if (l.pago) return { label: 'Pago', className: 'border-green-500/40 bg-green-500/10 text-green-600' }
+    if (l.compensado) return { label: 'Compensado', className: 'border-green-500/40 bg-green-500/10 text-green-600' }
+    return { label: 'Pendente', className: 'border-yellow-500/40 bg-yellow-500/10 text-yellow-600' }
+  }
+
+  function valorClassName(l: LancamentoEnriched) {
+    if (l.tipo === 'compensacao') return 'text-muted-foreground'
+    if (['deposito', 'oferta'].includes(l.tipo)) return 'text-green-500'
+    if (!l.pago && !l.compensado) return 'text-destructive'
+    return ''
   }
 
   return (
@@ -198,8 +211,10 @@ export function LancamentosTable({ lancamentos, members, sessoes, caixas }: Lanc
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((l) => (
-                <TableRow key={l.id} className={l.pago ? 'opacity-60' : ''}>
+              filtered.map((l) => {
+                const status = statusInfo(l)
+                return (
+                <TableRow key={l.id} className={(l.pago || l.compensado) ? 'opacity-60' : ''}>
                   <TableCell>
                     <Checkbox
                       checked={selected.has(l.id)}
@@ -218,12 +233,12 @@ export function LancamentosTable({ lancamentos, members, sessoes, caixas }: Lanc
                   <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
                     {l.sessao ? formatDate(l.sessao.data) : '—'}
                   </TableCell>
-                  <TableCell className="text-sm font-medium">{formatCurrency(l.valor)}</TableCell>
+                  <TableCell className={`text-sm font-medium ${valorClassName(l)}`}>{formatCurrency(l.valor)}</TableCell>
                   <TableCell>
-                    <Badge variant={l.pago ? 'default' : 'secondary'} className="text-xs">
-                      {l.pago ? 'Pago' : 'Pendente'}
+                    <Badge variant="outline" className={`text-xs ${status.className}`}>
+                      {status.label}
                     </Badge>
-                    {l.pago && l.data_pagamento && (
+                    {(l.pago || l.compensado) && l.data_pagamento && (
                       <p className="text-xs text-muted-foreground mt-1">{formatDate(l.data_pagamento)}</p>
                     )}
                   </TableCell>
@@ -238,14 +253,15 @@ export function LancamentosTable({ lancamentos, members, sessoes, caixas }: Lanc
                     </Button>
                   </TableCell>
                 </TableRow>
-              ))
+              )
+              })
             )}
           </TableBody>
         </Table>
       </div>
 
       <p className="text-xs text-muted-foreground">
-        {filtered.length} lançamento(s) — Total: {formatCurrency(filtered.reduce((s, l) => s + l.valor, 0))} — Pendente: {formatCurrency(filtered.filter((l) => !l.pago).reduce((s, l) => s + l.valor, 0))}
+        {filtered.length} lançamento(s) — Total: {formatCurrency(filtered.reduce((s, l) => s + l.valor, 0))} — Pendente: {formatCurrency(filtered.filter((l) => !l.pago && !l.compensado).reduce((s, l) => s + l.valor, 0))}
       </p>
     </div>
   )

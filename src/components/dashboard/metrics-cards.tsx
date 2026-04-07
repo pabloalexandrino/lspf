@@ -22,8 +22,8 @@ export async function MetricsCards() {
     supabase.from('members').select('id', { count: 'exact', head: true }).eq('ativo', true),
     supabase.from('sessoes').select('id', { count: 'exact', head: true })
       .gte('data', firstOfMonth).lte('data', lastOfMonth),
-    supabase.from('lancamentos').select('member_id').eq('pago', false),
-    supabase.from('lancamentos').select('valor').eq('pago', false),
+    supabase.from('lancamentos').select('member_id').eq('pago', false).eq('compensado', false),
+    supabase.from('lancamentos').select('valor').eq('pago', false).eq('compensado', false),
     supabase.from('sessoes').select('data').gt('data', today).order('data').limit(1),
     supabase.from('caixas').select('id, nome').eq('ativo', true),
     supabase.from('lancamentos').select('valor, caixa_id, tipo, member_id, pago').not('caixa_id', 'is', null),

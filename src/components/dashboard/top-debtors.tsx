@@ -8,6 +8,7 @@ export async function TopDebtors() {
     .from('lancamentos')
     .select('member_id, valor, members!inner(nome)')
     .eq('pago', false)
+    .eq('compensado', false)
 
   if (!data || data.length === 0) {
     return (
