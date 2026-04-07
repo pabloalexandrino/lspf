@@ -126,7 +126,8 @@ export async function gerarLancamentos(sessaoId: string) {
         .from('lancamentos')
         .select('valor')
         .eq('member_id', memberId)
-        .eq('pago', true),
+        .eq('pago', true)
+        .in('tipo', ['deposito', 'compensacao']),
       supabase
         .from('lancamentos')
         .select('valor')
@@ -265,6 +266,61 @@ export async function salvarTronco(sessaoId: string, valor: number, observacao: 
 
   revalidatePath(`/sessoes/${sessaoId}`)
   revalidatePath('/financeiro')
+  revalidatePath('/')
+  return { success: true }
+}
+
+export async function usarCreditoWallet(memberId: string, lancamentoIds: string[]) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autorizado' }
+
+  if (lancamentoIds.length === 0) return { error: 'Nenhum lançamento selecionado' }
+
+  // 1. Fetch and validate selected lancamentos
+  const { data: lancamentos, error: fetchError } = await supabase
+    .from('lancamentos')
+    .select('id, valor, member_id, pago, compensado')
+    .in('id', lancamentoIds)
+
+  if (fetchError) return { error: fetchError.message }
+  if (!lancamentos || lancamentos.length === 0) return { error: 'Lançamentos não encontrados' }
+
+  for (const l of lancamentos) {
+    if (l.member_id !== memberId) return { error: 'Lançamentos inválidos' }
+    if (l.pago) return { error: 'Lançamento já está pago' }
+    if (l.compensado) return { error: 'Lançamento já foi compensado' }
+  }
+
+  const totalSelecionado = Math.round(
+    lancamentos.reduce((s, l) => s + Number(l.valor), 0) * 100
+  ) / 100
+
+  // 2. Mark selected lancamentos as compensated
+  const { error: updateError } = await supabase
+    .from('lancamentos')
+    .update({ compensado: true })
+    .in('id', lancamentoIds)
+
+  if (updateError) return { error: updateError.message }
+
+  // 3. Insert compensacao entry (negative valor — reduces wallet balance, can go negative)
+  const { error: insertError } = await supabase.from('lancamentos').insert({
+    member_id: memberId,
+    sessao_id: null,
+    tipo: 'compensacao',
+    valor: -totalSelecionado,
+    pago: true,
+    compensado: false,
+    descricao: 'Compensação manual de crédito em carteira',
+    caixa_id: null,
+    data_pagamento: new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' }),
+  })
+
+  if (insertError) return { error: insertError.message }
+
+  revalidatePath('/financeiro')
+  revalidatePath('/financeiro/membros')
   revalidatePath('/')
   return { success: true }
 }
