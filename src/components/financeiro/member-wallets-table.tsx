@@ -196,7 +196,7 @@ export function MemberWalletsTable({ members, caixas }: MemberWalletsTableProps)
             <SheetTitle>Lançamentos pendentes — {sheetMember?.nome}</SheetTitle>
           </SheetHeader>
 
-          <div className="mt-4 space-y-4">
+          <div className="px-6 pb-6 pt-4 space-y-4">
             {pendentesReais.length === 0 && compensados.length === 0 ? (
               <p className="text-muted-foreground text-sm">Nenhum lançamento pendente.</p>
             ) : (

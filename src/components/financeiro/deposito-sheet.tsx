@@ -116,7 +116,7 @@ export function DepositoSheet({ member, caixas, depositos, open, onOpenChange }:
         </SheetHeader>
 
         {/* Histórico de depósitos */}
-        <div className="mt-4 space-y-2">
+        <div className="px-6 pt-4 space-y-2">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Histórico</p>
           {depositos.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhum depósito registrado.</p>
@@ -166,16 +166,16 @@ export function DepositoSheet({ member, caixas, depositos, open, onOpenChange }:
           )}
         </div>
 
-        <div className="border-t border-border mt-4 pt-4">
+        <div className="border-t border-border px-6 pb-6 pt-4">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-3">
             {editingId ? 'Editando depósito' : 'Novo depósito'}
           </p>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-1">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
               <Label>Membro</Label>
               <Input value={member.nome} readOnly className="bg-muted" />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Label htmlFor="dep-valor">Valor (R$)</Label>
               <Input
                 id="dep-valor"
@@ -188,7 +188,7 @@ export function DepositoSheet({ member, caixas, depositos, open, onOpenChange }:
                 required
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Label htmlFor="dep-data">Data</Label>
               <Input
                 id="dep-data"
@@ -198,7 +198,7 @@ export function DepositoSheet({ member, caixas, depositos, open, onOpenChange }:
                 required
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Label htmlFor="dep-descricao">Descrição</Label>
               <Input
                 id="dep-descricao"
@@ -206,7 +206,7 @@ export function DepositoSheet({ member, caixas, depositos, open, onOpenChange }:
                 onChange={(e) => setDescricao(e.target.value)}
               />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <Label htmlFor="dep-caixa">Caixa</Label>
               <select
                 id="dep-caixa"
