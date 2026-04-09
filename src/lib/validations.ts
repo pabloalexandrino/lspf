@@ -2,13 +2,72 @@ import { z } from 'zod'
 
 export const memberSchema = z.object({
   nome: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
-  nome_historico: z.string().optional().or(z.literal('')),
+  nome_historico: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().nullable().optional()
+  ),
+  funcao: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().nullable().optional()
+  ),
+  cargo_id: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().uuid().nullable().optional()
+  ),
+  grau: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.enum(['MI', 'MM', 'CM', 'AM', 'C']).nullable().optional()
+  ),
+  numero: z.preprocess(
+    v => (v === '' || v === undefined || v === null ? null : Number(v)),
+    z.number().int().positive().nullable().optional()
+  ),
+  cidade: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().nullable().optional()
+  ),
+  profissao: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().nullable().optional()
+  ),
+  cim: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().nullable().optional()
+  ),
+  turma: z.preprocess(
+    v => (v === '' || v === undefined || v === null ? null : Number(v)),
+    z.number().int().nullable().optional()
+  ),
+  fundador: z.boolean().default(false),
+  ativo: z.boolean().default(true),
   data_nascimento: z.preprocess(
     v => (v === '' || v === undefined ? null : v),
     z.string().nullable().optional()
   ),
-  ativo: z.boolean().default(true),
-  cargo_ids: z.array(z.string()).default([]),
+  data_am: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().nullable().optional()
+  ),
+  data_cm: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().nullable().optional()
+  ),
+  data_mm: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().nullable().optional()
+  ),
+  data_cm_prev: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().nullable().optional()
+  ),
+  data_mm_prev: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().nullable().optional()
+  ),
+  indicado_por: z.preprocess(
+    v => (v === '' || v === undefined ? null : v),
+    z.string().nullable().optional()
+  ),
   whatsapp: z.preprocess(
     v => (v === '' || v === undefined ? null : v),
     z.string().regex(/^\d{10,11}$/, 'WhatsApp deve ter 10 ou 11 dígitos').nullable().optional()
