@@ -1,203 +1,188 @@
 'use client'
 
-import { useState } from 'react'
-import { MemberWithCargos, Cargo, LancamentoWithSessao } from '@/lib/types'
-import { formatDate } from '@/lib/utils'
-import { deleteMember } from '@/app/actions/members'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { MemberForm } from './member-form'
-import { WhatsAppButton } from './whatsapp-button'
-import { MemberDisplay } from './member-display'
+import { Member, Grau, LancamentoWithSessao } from '@/lib/types'
 import { CargoBadge } from './cargo-badge'
-import { Pencil, Trash2, UserPlus } from 'lucide-react'
-import { toast } from 'sonner'
-import { useRouter } from 'next/navigation'
+import { ProgressionTimeline } from './progression-timeline'
+import { WhatsAppButton } from './whatsapp-button'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Pencil, Trash2 } from 'lucide-react'
 
-interface MembersTableProps {
-  members: MemberWithCargos[]
-  allCargos: Cargo[]
-  lancamentos: LancamentoWithSessao[]
+const GRAU_COLORS: Record<Grau, string> = {
+  MI: '#7c3aed',
+  MM: '#1e3a5f',
+  CM: '#16a34a',
+  AM: '#ea580c',
+  C:  '#6b7280',
 }
 
-export function MembersTable({ members, allCargos, lancamentos }: MembersTableProps) {
-  const router = useRouter()
-  const [search, setSearch] = useState('')
-  const [filterAtivo, setFilterAtivo] = useState<'all' | 'active' | 'inactive'>('all')
-  const [editMember, setEditMember] = useState<MemberWithCargos | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [showCreate, setShowCreate] = useState(false)
+interface MembersTableProps {
+  members: Member[]
+  lancamentos: LancamentoWithSessao[]
+  onEdit: (member: Member) => void
+  onDelete: (id: string) => void
+}
 
-  const filtered = members.filter((m) => {
-    const matchSearch = m.nome.toLowerCase().includes(search.toLowerCase())
-    const matchFilter =
-      filterAtivo === 'all' ||
-      (filterAtivo === 'active' && m.ativo) ||
-      (filterAtivo === 'inactive' && !m.ativo)
-    return matchSearch && matchFilter
-  })
-
-  async function handleDelete(id: string) {
-    const result = await deleteMember(id)
-    if (result?.error) {
-      toast.error(result.error)
-    } else {
-      toast.success('Membro excluído')
-      router.refresh()
-    }
-    setDeletingId(null)
-  }
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <Input
-          placeholder="Buscar por nome..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="max-w-xs"
-        />
-        <div className="flex gap-2">
-          {(['all', 'active', 'inactive'] as const).map((f) => (
-            <Button
-              key={f}
-              variant={filterAtivo === f ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setFilterAtivo(f)}
-            >
-              {f === 'all' ? 'Todos' : f === 'active' ? 'Ativos' : 'Inativos'}
-            </Button>
-          ))}
-          <Button size="sm" onClick={() => setShowCreate(true)}>
-            <UserPlus className="h-4 w-4 mr-1" />
-            Novo
-          </Button>
-        </div>
-      </div>
-
+export function MembersTable({ members, lancamentos, onEdit, onDelete }: MembersTableProps) {
+  if (members.length === 0) {
+    return (
       <div className="rounded-md border border-border">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome</TableHead>
-              <TableHead className="hidden md:table-cell">Cargos</TableHead>
-              <TableHead className="hidden sm:table-cell">Nascimento</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>WhatsApp</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
           <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                  Nenhum membro encontrado
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell>
-                    <MemberDisplay member={member} />
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {member.member_cargos.length === 0 ? (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    ) : (
-                      <div className="flex flex-wrap gap-1">
-                        {member.member_cargos.slice(0, 2).map((mc) => (
-                          <CargoBadge key={mc.cargo_id} cargo={mc.cargos} />
-                        ))}
-                        {member.member_cargos.length > 2 && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
-                            +{member.member_cargos.length - 2}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">
-                    {member.data_nascimento ? formatDate(member.data_nascimento) : '—'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={member.ativo ? 'default' : 'secondary'}>
-                      {member.ativo ? 'Ativo' : 'Inativo'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <WhatsAppButton
-                      member={member}
-                      lancamentos={lancamentos.filter((l) => l.member_id === member.id && !l.pago)}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => setEditMember(member)}>
-                        <Pencil className="h-3 w-3" />
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setDeletingId(member.id)}>
-                        <Trash2 className="h-3 w-3 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
+            <TableRow>
+              <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
+                Nenhum membro encontrado
+              </TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </div>
+    )
+  }
 
-      {/* Create Sheet */}
-      <Sheet open={showCreate} onOpenChange={setShowCreate}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Novo Membro</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
-            <MemberForm allCargos={allCargos} onSuccess={() => setShowCreate(false)} />
-          </div>
-        </SheetContent>
-      </Sheet>
+  return (
+    <div className="rounded-md border border-border overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-16">Nº</TableHead>
+            <TableHead>Irmão</TableHead>
+            <TableHead className="hidden md:table-cell w-16">Grau</TableHead>
+            <TableHead className="hidden lg:table-cell">Cargo</TableHead>
+            <TableHead className="hidden xl:table-cell">Função</TableHead>
+            <TableHead className="hidden xl:table-cell">Cidade</TableHead>
+            <TableHead className="hidden lg:table-cell w-20">CIM</TableHead>
+            <TableHead className="hidden md:table-cell w-24">Progressão</TableHead>
+            <TableHead className="w-20">Status</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {members.map((member) => {
+            const grauColor = member.grau ? GRAU_COLORS[member.grau] : null
+            const memberLancamentos = lancamentos.filter(l => l.member_id === member.id)
 
-      {/* Edit Sheet */}
-      <Sheet open={!!editMember} onOpenChange={(open) => !open && setEditMember(null)}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Editar Membro</SheetTitle>
-          </SheetHeader>
-          <div className="mt-6">
-            {editMember && (
-              <MemberForm
-                member={editMember}
-                allCargos={allCargos}
-                onSuccess={() => setEditMember(null)}
-              />
-            )}
-          </div>
-        </SheetContent>
-      </Sheet>
+            return (
+              <TableRow key={member.id}>
+                {/* Nº */}
+                <TableCell>
+                  <div className="flex flex-col items-start gap-0.5">
+                    <span className="font-mono text-sm text-muted-foreground">
+                      {member.numero ?? '—'}
+                    </span>
+                    {member.fundador && (
+                      <span
+                        className="text-[9px] font-bold tracking-widest px-1 py-0.5 rounded"
+                        style={{
+                          backgroundColor: '#d4a83430',
+                          color: '#d4a834',
+                          border: '1px solid #d4a83460',
+                        }}
+                      >
+                        FUND.
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
 
-      {/* Delete Dialog */}
-      <Dialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar exclusão</DialogTitle>
-            <DialogDescription>
-              Esta ação não pode ser desfeita. O membro será excluído permanentemente.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeletingId(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={() => deletingId && handleDelete(deletingId)}>
-              Excluir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                {/* Irmão */}
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-foreground text-sm">{member.nome}</span>
+                    {member.nome_historico && (
+                      <span className="text-xs text-muted-foreground/60 italic">
+                        {member.nome_historico}
+                      </span>
+                    )}
+                  </div>
+                </TableCell>
+
+                {/* Grau */}
+                <TableCell className="hidden md:table-cell">
+                  {member.grau && grauColor ? (
+                    <span
+                      className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
+                      style={{
+                        backgroundColor: `${grauColor}25`,
+                        color: grauColor,
+                        border: `1px solid ${grauColor}50`,
+                      }}
+                    >
+                      {member.grau}
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">—</span>
+                  )}
+                </TableCell>
+
+                {/* Cargo */}
+                <TableCell className="hidden lg:table-cell">
+                  {member.cargo
+                    ? <CargoBadge cargo={member.cargo} />
+                    : <span className="text-muted-foreground text-sm">—</span>
+                  }
+                </TableCell>
+
+                {/* Função */}
+                <TableCell className="hidden xl:table-cell">
+                  <span className="text-xs text-muted-foreground">
+                    {member.funcao ?? '—'}
+                  </span>
+                </TableCell>
+
+                {/* Cidade */}
+                <TableCell className="hidden xl:table-cell">
+                  <span className="text-sm text-muted-foreground">
+                    {member.cidade ?? '—'}
+                  </span>
+                </TableCell>
+
+                {/* CIM */}
+                <TableCell className="hidden lg:table-cell">
+                  <span className="font-mono text-xs text-muted-foreground">
+                    {member.cim ?? '—'}
+                  </span>
+                </TableCell>
+
+                {/* Progressão */}
+                <TableCell className="hidden md:table-cell">
+                  <ProgressionTimeline
+                    data_am={member.data_am}
+                    data_cm={member.data_cm}
+                    data_mm={member.data_mm}
+                    data_cm_prev={member.data_cm_prev}
+                    data_mm_prev={member.data_mm_prev}
+                  />
+                </TableCell>
+
+                {/* Status */}
+                <TableCell>
+                  <Badge variant={member.ativo ? 'default' : 'secondary'} className="text-xs">
+                    {member.ativo ? 'Ativo' : 'Inativo'}
+                  </Badge>
+                </TableCell>
+
+                {/* Ações */}
+                <TableCell className="text-right">
+                  <div className="flex justify-end items-center gap-1">
+                    <WhatsAppButton
+                      member={member}
+                      lancamentos={memberLancamentos}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => onEdit(member)}>
+                      <Pencil className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => onDelete(member.id)}>
+                      <Trash2 className="h-3 w-3 text-destructive" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            )
+          })}
+        </TableBody>
+      </Table>
     </div>
   )
 }
