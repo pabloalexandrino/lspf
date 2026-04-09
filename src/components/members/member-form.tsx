@@ -145,7 +145,19 @@ cidade: member?.cidade ?? '',
           onValueChange={(v) => setValue('cargo_id', v)}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Selecione o cargo" />
+            <SelectValue placeholder="Selecione o cargo">
+              {(value: string) => {
+                if (!value) return 'Selecione o cargo'
+                const cargo = allCargos.find(c => c.id === value)
+                if (!cargo) return value
+                return (
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: cargo.cor }} />
+                    {cargo.nome}
+                  </div>
+                )
+              }}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">— Sem cargo —</SelectItem>
