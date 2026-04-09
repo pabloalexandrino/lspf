@@ -1,13 +1,41 @@
+export type Grau = 'MI' | 'MM' | 'CM' | 'AM' | 'C'
+
+export type Cargo = {
+  id: string
+  nome: string
+  cor: string
+  ordem: number
+  ativo: boolean
+  created_at: string
+}
+
 export type Member = {
   id: string
   nome: string
   nome_historico: string | null
-  data_nascimento: string | null
-  cargo: string | null
+  funcao: string | null
+  cargo_id: string | null
+  cargo: Cargo | null
+  grau: Grau | null
+  numero: number | null
+  cidade: string | null
+  profissao: string | null
+  cim: string | null
+  turma: number | null
+  fundador: boolean
   ativo: boolean
+  data_nascimento: string | null
+  data_am: string | null
+  data_cm: string | null
+  data_mm: string | null
+  data_cm_prev: string | null
+  data_mm_prev: string | null
+  indicado_por: string | null
   whatsapp: string | null
   created_at: string
 }
+
+// MemberWithCargos removido — cargo agora é FK única em members.cargo_id
 
 export type Sessao = {
   id: string
@@ -89,23 +117,6 @@ export type Mensalidade = {
   pago: boolean
   data_pagamento: string | null
   created_at: string
-}
-
-export type Cargo = {
-  id: string
-  nome: string
-  cor: string
-  ordem: number
-  ativo: boolean
-  created_at: string
-}
-
-export type MemberWithCargos = Member & {
-  member_cargos: Array<{
-    id: string
-    cargo_id: string
-    cargos: Cargo
-  }>
 }
 
 export type LancamentoWithSessao = Lancamento & {
