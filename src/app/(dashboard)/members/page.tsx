@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
-import { MembersTable } from '@/components/members/members-table'
+import { MembersClient } from '@/components/members/members-client'
 import { Users } from 'lucide-react'
 import { redirect } from 'next/navigation'
-import { MemberWithCargos, Cargo, LancamentoWithSessao } from '@/lib/types'
+import { Member, Cargo, LancamentoWithSessao } from '@/lib/types'
 
 export default async function MembersPage() {
   const supabase = await createClient()
@@ -12,8 +12,8 @@ export default async function MembersPage() {
   const [{ data: members }, { data: cargos }, { data: lancamentosRaw }] = await Promise.all([
     supabase
       .from('members')
-      .select('*, member_cargos(id, cargo_id, cargos(*))')
-      .order('nome'),
+      .select('*, cargo:cargos(id, nome, cor, ordem, ativo, created_at)')
+      .order('numero', { ascending: true, nullsFirst: false }),
     supabase
       .from('cargos')
       .select('*')
@@ -32,8 +32,8 @@ export default async function MembersPage() {
         <Users className="h-5 w-5 text-primary" />
         <h1 className="text-2xl font-bold">Membros</h1>
       </div>
-      <MembersTable
-        members={(members ?? []) as MemberWithCargos[]}
+      <MembersClient
+        members={(members ?? []) as Member[]}
         allCargos={(cargos ?? []) as Cargo[]}
         lancamentos={(lancamentosRaw ?? []) as LancamentoWithSessao[]}
       />

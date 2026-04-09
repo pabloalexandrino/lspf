@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { notFound, redirect } from 'next/navigation'
-import { MemberWithCargos, LancamentoWithSessao } from '@/lib/types'
+import { Member, LancamentoWithSessao } from '@/lib/types'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { PresencaList } from '@/components/sessoes/presenca-list'
 import { AgapeList } from '@/components/sessoes/agape-list'
@@ -33,7 +33,7 @@ export default async function SessaoDetailPage({ params }: PageProps) {
     { data: allLancamentosRaw },
   ] = await Promise.all([
     supabase.from('sessoes').select('*').eq('id', id).single(),
-    supabase.from('members').select('*, member_cargos(id, cargo_id, cargos(*))').order('nome').eq('ativo', true),
+    supabase.from('members').select('*, cargo:cargos(id, nome, cor, ordem, ativo, created_at)').order('nome').eq('ativo', true),
     supabase.from('produtos').select('*').eq('ativo', true).order('nome'),
     supabase.from('presenca_sessao').select('*').eq('sessao_id', id),
     supabase.from('presenca_agape').select('*').eq('sessao_id', id),
@@ -83,12 +83,12 @@ export default async function SessaoDetailPage({ params }: PageProps) {
         </TabsList>
 
         <TabsContent value="presenca" className="mt-4">
-          <PresencaList sessaoId={id} members={(members ?? []) as MemberWithCargos[]} presencas={presencasSessao ?? []} />
+          <PresencaList sessaoId={id} members={(members ?? []) as Member[]} presencas={presencasSessao ?? []} />
         </TabsContent>
 
         {sessao.tem_agape && (
           <TabsContent value="agape" className="mt-4">
-            <AgapeList sessaoId={id} members={(members ?? []) as MemberWithCargos[]} presencasSessao={presencasSessao ?? []} presencasAgape={presencasAgape ?? []} />
+            <AgapeList sessaoId={id} members={(members ?? []) as Member[]} presencasSessao={presencasSessao ?? []} presencasAgape={presencasAgape ?? []} />
           </TabsContent>
         )}
 
@@ -97,7 +97,7 @@ export default async function SessaoDetailPage({ params }: PageProps) {
         </TabsContent>
 
         <TabsContent value="financeiro" className="mt-4">
-          <ResumoFinanceiro sessao={sessao} members={(members ?? []) as MemberWithCargos[]} presencasSessao={presencasSessao ?? []} presencasAgape={presencasAgape ?? []} consumos={consumos} lancamentos={lancamentos} allLancamentos={allLancamentos} />
+          <ResumoFinanceiro sessao={sessao} members={(members ?? []) as Member[]} presencasSessao={presencasSessao ?? []} presencasAgape={presencasAgape ?? []} consumos={consumos} lancamentos={lancamentos} allLancamentos={allLancamentos} />
         </TabsContent>
 
         <TabsContent value="tronco" className="mt-4">

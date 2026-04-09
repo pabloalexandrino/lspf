@@ -1,6 +1,6 @@
 'use client'
 
-import { MemberWithCargos, PresencaSessao } from '@/lib/types'
+import { Member, PresencaSessao } from '@/lib/types'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { togglePresencaSessao } from '@/app/actions/presencas'
@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 
 interface PresencaListProps {
   sessaoId: string
-  members: MemberWithCargos[]
+  members: Member[]
   presencas: PresencaSessao[]
 }
 
@@ -53,8 +53,7 @@ export function PresencaList({ sessaoId, members, presencas }: PresencaListProps
                 <span
                   className="font-medium"
                   style={{
-                    color: [...member.member_cargos]
-                      .sort((a, b) => a.cargos.ordem - b.cargos.ordem)[0]?.cargos.cor,
+                    color: member.cargo?.cor,
                   }}
                 >
                   {member.nome}

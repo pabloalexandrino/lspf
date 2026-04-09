@@ -47,7 +47,7 @@ function NodeDot({ state, date, label }: { state: NodeState; date: string | null
   return (
     <TooltipProvider>
       <Tooltip>
-        <TooltipTrigger asChild>
+        <TooltipTrigger>
           {dot}
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs">

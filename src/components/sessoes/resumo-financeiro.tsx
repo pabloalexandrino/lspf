@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Lancamento, LancamentoWithSessao, MemberWithCargos, PresencaSessao, PresencaAgape, ConsumoProduto, Produto, Sessao, Member } from '@/lib/types'
+import { Lancamento, LancamentoWithSessao, PresencaSessao, PresencaAgape, ConsumoProduto, Produto, Sessao, Member } from '@/lib/types'
 import { WhatsAppButton } from '@/components/members/whatsapp-button'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,7 @@ import { RefreshCw, CheckCircle } from 'lucide-react'
 
 interface ResumoFinanceiroProps {
   sessao: Sessao
-  members: MemberWithCargos[]
+  members: Member[]
   presencasSessao: PresencaSessao[]
   presencasAgape: PresencaAgape[]
   consumos: (ConsumoProduto & { produto?: Produto })[]

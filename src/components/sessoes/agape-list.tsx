@@ -1,6 +1,6 @@
 'use client'
 
-import { MemberWithCargos, PresencaSessao, PresencaAgape } from '@/lib/types'
+import { Member, PresencaSessao, PresencaAgape } from '@/lib/types'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 import { togglePresencaAgape } from '@/app/actions/presencas'
@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 
 interface AgapeListProps {
   sessaoId: string
-  members: MemberWithCargos[]
+  members: Member[]
   presencasSessao: PresencaSessao[]
   presencasAgape: PresencaAgape[]
 }
@@ -61,8 +61,7 @@ export function AgapeList({ sessaoId, members, presencasSessao, presencasAgape }
                 <span
                   className="font-medium"
                   style={{
-                    color: [...member.member_cargos]
-                      .sort((a, b) => a.cargos.ordem - b.cargos.ordem)[0]?.cargos.cor,
+                    color: member.cargo?.cor,
                   }}
                 >
                   {member.nome}
