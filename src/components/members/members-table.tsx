@@ -31,7 +31,7 @@ export function MembersTable({ members, lancamentos, onEdit, onDelete }: Members
         <Table>
           <TableBody>
             <TableRow>
-              <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
+              <TableCell colSpan={10} className="text-center text-muted-foreground py-12">
                 Nenhum membro encontrado
               </TableCell>
             </TableRow>
@@ -133,7 +133,7 @@ export function MembersTable({ members, lancamentos, onEdit, onDelete }: Members
 
                 {/* Cidade */}
                 <TableCell className="hidden xl:table-cell">
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     {member.cidade ?? '—'}
                   </span>
                 </TableCell>
