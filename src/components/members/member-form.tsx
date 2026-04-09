@@ -3,11 +3,12 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { memberSchema } from '@/lib/validations'
-import { MemberWithCargos, Cargo } from '@/lib/types'
+import { Member, Cargo, Grau } from '@/lib/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CargoBadge } from './cargo-badge'
 import { toast } from 'sonner'
 import { createMember, updateMember } from '@/app/actions/members'
@@ -18,15 +19,38 @@ type MemberFormValues = z.input<typeof memberSchema>
 type MemberFormOutput = z.output<typeof memberSchema>
 
 interface MemberFormProps {
-  member?: MemberWithCargos
+  member?: Member
   allCargos: Cargo[]
   onSuccess: () => void
 }
 
+const GRAU_OPTIONS: { value: Grau; label: string }[] = [
+  { value: 'MI', label: 'MI — Mestre Instalado' },
+  { value: 'MM', label: 'MM — Mestre Maçom' },
+  { value: 'CM', label: 'CM — Companheiro Maçom' },
+  { value: 'AM', label: 'AM — Aprendiz Maçom' },
+  { value: 'C',  label: 'C  — Candidato' },
+]
+
+const TURMA_OPTIONS = [
+  { value: '', label: 'Fundador' },
+  { value: '1', label: '1ª Turma' },
+  { value: '2', label: '2ª Turma' },
+  { value: '3', label: '3ª Turma' },
+  { value: '4', label: '4ª Turma' },
+  { value: '5', label: '5ª Turma' },
+]
+
+function SectionTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground pt-2 pb-1 border-b border-border">
+      {children}
+    </p>
+  )
+}
+
 export function MemberForm({ member, allCargos, onSuccess }: MemberFormProps) {
   const router = useRouter()
-
-  const currentCargoIds = member?.member_cargos.map(mc => mc.cargo_id) ?? []
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, watch } =
     useForm<MemberFormValues, unknown, MemberFormOutput>({
@@ -34,27 +58,38 @@ export function MemberForm({ member, allCargos, onSuccess }: MemberFormProps) {
       defaultValues: {
         nome: member?.nome ?? '',
         nome_historico: member?.nome_historico ?? '',
-        data_nascimento: member?.data_nascimento ?? '',
+        funcao: member?.funcao ?? '',
+        cargo_id: member?.cargo_id ?? '',
+        grau: member?.grau ?? '',
+        numero: member?.numero ?? undefined,
+        cidade: member?.cidade ?? '',
+        profissao: member?.profissao ?? '',
+        cim: member?.cim ?? '',
+        turma: member?.turma ?? undefined,
+        fundador: member?.fundador ?? false,
         ativo: member?.ativo ?? true,
-        cargo_ids: currentCargoIds,
+        data_nascimento: member?.data_nascimento ?? '',
+        data_am: member?.data_am ?? '',
+        data_cm: member?.data_cm ?? '',
+        data_mm: member?.data_mm ?? '',
+        data_cm_prev: member?.data_cm_prev ?? '',
+        data_mm_prev: member?.data_mm_prev ?? '',
+        indicado_por: member?.indicado_por ?? '',
         whatsapp: member?.whatsapp ?? '',
       },
     })
 
   const ativo = watch('ativo')
-  const cargoIds = watch('cargo_ids') as string[]
-
-  function toggleCargo(cargoId: string) {
-    const current = cargoIds ?? []
-    if (current.includes(cargoId)) {
-      setValue('cargo_ids', current.filter(id => id !== cargoId))
-    } else {
-      setValue('cargo_ids', [...current, cargoId])
-    }
-  }
+  const fundador = watch('fundador')
+  const grau = watch('grau')
+  const data_cm = watch('data_cm')
+  const data_mm = watch('data_mm')
+  const showIndicadoPor = grau === 'AM' || grau === 'C'
+  const showDataCmPrev = !data_cm
+  const showDataMmPrev = !data_mm
 
   function formatWhatsapp(value: string): string {
-    const digits = value.replace(/\D/g, '').slice(0, 11)
+    const digits = (value ?? '').replace(/\D/g, '').slice(0, 11)
     if (digits.length <= 10) {
       return digits.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3').replace(/-$/, '')
     }
@@ -76,7 +111,148 @@ export function MemberForm({ member, allCargos, onSuccess }: MemberFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 px-6 pb-6 pt-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-6 pb-6 pt-4 overflow-y-auto max-h-[calc(100vh-8rem)]">
+
+      {/* ── SEÇÃO 1: DADOS MAÇÔNICOS ── */}
+      <SectionTitle>Dados Maçônicos</SectionTitle>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="numero">Número</Label>
+          <Input
+            id="numero"
+            type="number"
+            min={1}
+            placeholder="Ex: 20"
+            {...register('numero')}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="cim">CIM</Label>
+          <Input id="cim" placeholder="351211" {...register('cim')} />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Grau</Label>
+        <Select
+          value={(watch('grau') as string) ?? ''}
+          onValueChange={(v) => setValue('grau', v as Grau)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o grau" />
+          </SelectTrigger>
+          <SelectContent>
+            {GRAU_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Cargo</Label>
+        <Select
+          value={(watch('cargo_id') as string) ?? ''}
+          onValueChange={(v) => setValue('cargo_id', v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o cargo" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">— Sem cargo —</SelectItem>
+            {allCargos.map((cargo) => (
+              <SelectItem key={cargo.id} value={cargo.id}>
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: cargo.cor }}
+                  />
+                  {cargo.nome}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="funcao">Função Ritual</Label>
+        <Input id="funcao" placeholder="Ex: Mestre de Harmonia" {...register('funcao')} />
+      </div>
+
+      <div className="space-y-2">
+        <Label>Turma</Label>
+        <Select
+          value={watch('turma') != null ? String(watch('turma')) : ''}
+          onValueChange={(v) => setValue('turma', v === '' ? null : Number(v))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione a turma" />
+          </SelectTrigger>
+          <SelectContent>
+            {TURMA_OPTIONS.map((o) => (
+              <SelectItem key={o.value} value={o.value}>
+                {o.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <Label htmlFor="fundador">Fundador</Label>
+        <Switch
+          id="fundador"
+          checked={!!fundador}
+          onCheckedChange={(v) => setValue('fundador', v)}
+        />
+      </div>
+
+      {showIndicadoPor && (
+        <div className="space-y-2">
+          <Label htmlFor="indicado_por">Indicado por</Label>
+          <Input id="indicado_por" placeholder="Nome do padrinho" {...register('indicado_por')} />
+        </div>
+      )}
+
+      {/* ── SEÇÃO 2: PROGRESSÃO ── */}
+      <SectionTitle>Progressão</SectionTitle>
+
+      <div className="space-y-2">
+        <Label htmlFor="data_am">Data AM (Iniciação)</Label>
+        <Input id="data_am" type="date" {...register('data_am')} />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="data_cm">Data CM (Elevação)</Label>
+        <Input id="data_cm" type="date" {...register('data_cm')} />
+      </div>
+
+      {showDataCmPrev && (
+        <div className="space-y-2">
+          <Label htmlFor="data_cm_prev">Previsão CM</Label>
+          <Input id="data_cm_prev" type="date" {...register('data_cm_prev')} />
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <Label htmlFor="data_mm">Data MM (Exaltação)</Label>
+        <Input id="data_mm" type="date" {...register('data_mm')} />
+      </div>
+
+      {showDataMmPrev && (
+        <div className="space-y-2">
+          <Label htmlFor="data_mm_prev">Previsão MM</Label>
+          <Input id="data_mm_prev" type="date" {...register('data_mm_prev')} />
+        </div>
+      )}
+
+      {/* ── SEÇÃO 3: DADOS PESSOAIS ── */}
+      <SectionTitle>Dados Pessoais</SectionTitle>
+
       <div className="space-y-2">
         <Label htmlFor="nome">Nome *</Label>
         <Input id="nome" {...register('nome')} placeholder="Nome completo" />
@@ -85,7 +261,7 @@ export function MemberForm({ member, allCargos, onSuccess }: MemberFormProps) {
 
       <div className="space-y-2">
         <Label htmlFor="nome_historico">Nome Histórico</Label>
-        <Input id="nome_historico" {...register('nome_historico')} placeholder="Nome na loja" />
+        <Input id="nome_historico" {...register('nome_historico')} placeholder="Ex: Alberto Santos Dumont" />
       </div>
 
       <div className="space-y-2">
@@ -93,34 +269,14 @@ export function MemberForm({ member, allCargos, onSuccess }: MemberFormProps) {
         <Input id="data_nascimento" type="date" {...register('data_nascimento')} />
       </div>
 
-      <div className="space-y-3">
-        <Label>Cargos</Label>
-        {allCargos.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Nenhum cargo ativo cadastrado.</p>
-        ) : (
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-            {allCargos.map((cargo) => {
-              const isSelected = (cargoIds ?? []).includes(cargo.id)
-              return (
-                <button
-                  key={cargo.id}
-                  type="button"
-                  onClick={() => toggleCargo(cargo.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-md border text-left transition-colors ${
-                    isSelected
-                      ? 'border-primary/50 bg-primary/5'
-                      : 'border-border hover:bg-secondary'
-                  }`}
-                >
-                  <CargoBadge cargo={cargo} />
-                  {isSelected && (
-                    <span className="text-xs text-primary font-medium">✓</span>
-                  )}
-                </button>
-              )
-            })}
-          </div>
-        )}
+      <div className="space-y-2">
+        <Label htmlFor="profissao">Profissão</Label>
+        <Input id="profissao" placeholder="Ex: Engenheiro" {...register('profissao')} />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="cidade">Cidade</Label>
+        <Input id="cidade" placeholder="Ex: Birigui" {...register('cidade')} />
       </div>
 
       <div className="space-y-2">
@@ -141,7 +297,7 @@ export function MemberForm({ member, allCargos, onSuccess }: MemberFormProps) {
         <Label htmlFor="ativo">Ativo</Label>
         <Switch
           id="ativo"
-          checked={ativo}
+          checked={!!ativo}
           onCheckedChange={(v) => setValue('ativo', v)}
         />
       </div>
