@@ -29,7 +29,7 @@ const GRAU_OPTIONS: { value: Grau; label: string; cor: string }[] = [
   { value: 'C',  label: 'C',  cor: '#6b7280' },
 ]
 
-const TURMA_OPTIONS = [
+const TURMA_OPTIONS: { value: string; label: string }[] = [
   { value: '',         label: 'Todas' },
   { value: 'fundador', label: 'Fundadores' },
   { value: '1',        label: '1ª Turma' },
@@ -99,6 +99,7 @@ export function MembersFilters({ filters, allCargos, onChange }: MembersFiltersP
           {(['ativo', 'todos', 'inativo'] as const).map((s) => (
             <button
               key={s}
+              type="button"
               onClick={() => update({ status: s })}
               className={`px-3 py-1 text-xs font-medium transition-colors ${
                 filters.status === s
@@ -132,6 +133,7 @@ export function MembersFilters({ filters, allCargos, onChange }: MembersFiltersP
                 return (
                   <button
                     key={opt.value}
+                    type="button"
                     onClick={() => toggleGrau(opt.value)}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border transition-all"
                     style={{
@@ -154,6 +156,7 @@ export function MembersFilters({ filters, allCargos, onChange }: MembersFiltersP
               {TURMA_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
+                  type="button"
                   onClick={() => update({ turma: filters.turma === opt.value ? '' : opt.value })}
                   className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
                     filters.turma === opt.value
@@ -172,6 +175,7 @@ export function MembersFilters({ filters, allCargos, onChange }: MembersFiltersP
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Cargo</p>
             <div className="flex flex-wrap gap-2">
               <button
+                type="button"
                 onClick={() => update({ cargo_id: '' })}
                 className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ${
                   filters.cargo_id === ''
@@ -184,15 +188,16 @@ export function MembersFilters({ filters, allCargos, onChange }: MembersFiltersP
               {allCargos.map((cargo) => (
                 <button
                   key={cargo.id}
+                  type="button"
                   onClick={() => update({ cargo_id: filters.cargo_id === cargo.id ? '' : cargo.id })}
                   className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all"
                   style={{
-                    backgroundColor: filters.cargo_id === cargo.id ? `${cargo.cor}30` : 'transparent',
-                    borderColor: filters.cargo_id === cargo.id ? cargo.cor : 'hsl(var(--border))',
-                    color: filters.cargo_id === cargo.id ? cargo.cor : 'hsl(var(--muted-foreground))',
+                    backgroundColor: filters.cargo_id === cargo.id ? `${cargo.cor ?? '#6b7280'}30` : 'transparent',
+                    borderColor: filters.cargo_id === cargo.id ? (cargo.cor ?? '#6b7280') : 'hsl(var(--border))',
+                    color: filters.cargo_id === cargo.id ? (cargo.cor ?? '#6b7280') : 'hsl(var(--muted-foreground))',
                   }}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cargo.cor }} />
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: cargo.cor ?? '#6b7280' }} />
                   {cargo.nome}
                 </button>
               ))}
