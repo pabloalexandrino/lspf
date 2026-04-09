@@ -60,8 +60,7 @@ export function MemberForm({ member, allCargos, onSuccess }: MemberFormProps) {
         funcao: member?.funcao ?? '',
         cargo_id: member?.cargo_id ?? '',
         grau: member?.grau ?? '',
-        numero: member?.numero ?? undefined,
-        cidade: member?.cidade ?? '',
+cidade: member?.cidade ?? '',
         profissao: member?.profissao ?? '',
         cim: member?.cim ?? '',
         turma: member?.turma ?? undefined,
@@ -115,21 +114,9 @@ export function MemberForm({ member, allCargos, onSuccess }: MemberFormProps) {
       {/* ── SEÇÃO 1: DADOS MAÇÔNICOS ── */}
       <SectionTitle>Dados Maçônicos</SectionTitle>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label htmlFor="numero">Número</Label>
-          <Input
-            id="numero"
-            type="number"
-            min={1}
-            placeholder="Ex: 20"
-            {...register('numero')}
-          />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="cim">CIM</Label>
-          <Input id="cim" placeholder="351211" {...register('cim')} />
-        </div>
+      <div className="space-y-2">
+        <Label htmlFor="cim">CIM</Label>
+        <Input id="cim" placeholder="351211" {...register('cim')} />
       </div>
 
       <div className="space-y-2">

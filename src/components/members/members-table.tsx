@@ -31,7 +31,7 @@ export function MembersTable({ members, lancamentos, onEdit, onDelete }: Members
         <Table>
           <TableBody>
             <TableRow>
-              <TableCell colSpan={10} className="text-center text-muted-foreground py-12">
+              <TableCell colSpan={9} className="text-center text-muted-foreground py-12">
                 Nenhum membro encontrado
               </TableCell>
             </TableRow>
@@ -46,7 +46,6 @@ export function MembersTable({ members, lancamentos, onEdit, onDelete }: Members
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-16">Nº</TableHead>
             <TableHead>Irmão</TableHead>
             <TableHead className="hidden md:table-cell w-16">Grau</TableHead>
             <TableHead className="hidden lg:table-cell">Cargo</TableHead>
@@ -65,36 +64,29 @@ export function MembersTable({ members, lancamentos, onEdit, onDelete }: Members
 
             return (
               <TableRow key={member.id}>
-                {/* Nº */}
-                <TableCell>
-                  <div className="flex flex-col items-start gap-0.5">
-                    <span className="font-mono text-sm text-muted-foreground">
-                      {member.numero ?? '—'}
-                    </span>
-                    {member.fundador && (
-                      <span
-                        className="text-[9px] font-bold tracking-widest px-1 py-0.5 rounded"
-                        style={{
-                          backgroundColor: '#d4a83430',
-                          color: '#d4a834',
-                          border: '1px solid #d4a83460',
-                        }}
-                      >
-                        FUND.
-                      </span>
-                    )}
-                  </div>
-                </TableCell>
-
                 {/* Irmão */}
                 <TableCell>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col gap-0.5">
                     <span className="font-medium text-foreground text-sm">{member.nome}</span>
-                    {member.nome_historico && (
-                      <span className="text-xs text-muted-foreground/60 italic">
-                        {member.nome_historico}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {member.nome_historico && (
+                        <span className="text-xs text-muted-foreground/60 italic">
+                          {member.nome_historico}
+                        </span>
+                      )}
+                      {member.fundador && (
+                        <span
+                          className="text-[9px] font-bold tracking-widest px-1 py-0.5 rounded"
+                          style={{
+                            backgroundColor: '#d4a83430',
+                            color: '#d4a834',
+                            border: '1px solid #d4a83460',
+                          }}
+                        >
+                          FUND.
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </TableCell>
 

@@ -35,27 +35,11 @@ export function MembersCards({ members, onEdit }: MembersCardsProps) {
         return (
           <div
             key={member.id}
-            className="relative rounded-lg border border-border bg-card p-4 space-y-3 hover:border-border/80 transition-colors"
+            className="rounded-lg border border-border bg-card p-4 space-y-3 hover:border-border/80 transition-colors"
             style={{ borderLeftColor: borderColor, borderLeftWidth: '3px' }}
           >
-            {/* Estrela de Fundador */}
-            {member.fundador && (
-              <span
-                className="absolute top-3 right-3 text-base leading-none"
-                style={{ color: '#d4a834' }}
-                title="Fundador"
-              >
-                ★
-              </span>
-            )}
-
-            {/* Header: Nº + badges */}
-            <div className="flex items-center gap-2 flex-wrap pr-6">
-              {member.numero && (
-                <span className="text-xs font-mono text-muted-foreground font-medium">
-                  #{member.numero}
-                </span>
-              )}
+            {/* Header: badges */}
+            <div className="flex items-center gap-2 flex-wrap">
               {member.grau && (
                 <span
                   className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide"
@@ -74,11 +58,25 @@ export function MembersCards({ members, onEdit }: MembersCardsProps) {
             {/* Nome */}
             <div>
               <p className="font-semibold text-foreground leading-snug">{member.nome}</p>
-              {member.nome_historico && (
-                <p className="text-xs text-muted-foreground/70 italic mt-0.5">
-                  {member.nome_historico}
-                </p>
-              )}
+              <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                {member.nome_historico && (
+                  <p className="text-xs text-muted-foreground/70 italic">
+                    {member.nome_historico}
+                  </p>
+                )}
+                {member.fundador && (
+                  <span
+                    className="text-[9px] font-bold tracking-widest px-1 py-0.5 rounded"
+                    style={{
+                      backgroundColor: '#d4a83430',
+                      color: '#d4a834',
+                      border: '1px solid #d4a83460',
+                    }}
+                  >
+                    FUND.
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Detalhes */}
