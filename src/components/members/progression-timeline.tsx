@@ -1,0 +1,110 @@
+'use client'
+
+import { format, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+
+interface ProgressionTimelineProps {
+  data_am: string | null
+  data_cm: string | null
+  data_mm: string | null
+  data_cm_prev: string | null
+  data_mm_prev: string | null
+}
+
+type NodeState = 'confirmed' | 'predicted' | 'empty'
+
+interface TimelineNode {
+  label: string
+  date: string | null
+  state: NodeState
+}
+
+function formatDate(date: string | null): string {
+  if (!date) return ''
+  try {
+    return format(parseISO(date), 'dd/MM/yyyy', { locale: ptBR })
+  } catch {
+    return date
+  }
+}
+
+function NodeDot({ state, date, label }: { state: NodeState; date: string | null; label: string }) {
+  const dot = (
+    <div className={`
+      w-3 h-3 rounded-full flex-shrink-0 transition-colors
+      ${state === 'confirmed'
+        ? 'bg-primary border-2 border-primary'
+        : state === 'predicted'
+          ? 'bg-transparent border-2 border-primary border-dashed'
+          : 'bg-transparent border-2 border-muted-foreground/30'
+      }
+    `} />
+  )
+
+  if (!date) return dot
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          {dot}
+        </TooltipTrigger>
+        <TooltipContent side="top" className="text-xs">
+          <p className="font-medium">{label}</p>
+          <p>{formatDate(date)}</p>
+          {state === 'predicted' && (
+            <p className="text-muted-foreground">(previsão)</p>
+          )}
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  )
+}
+
+export function ProgressionTimeline({
+  data_am,
+  data_cm,
+  data_mm,
+  data_cm_prev,
+  data_mm_prev,
+}: ProgressionTimelineProps) {
+  // If no dates at all, don't render (foundador without dates)
+  const hasAnyDate = data_am || data_cm || data_mm || data_cm_prev || data_mm_prev
+  if (!hasAnyDate) return null
+
+  const nodes: TimelineNode[] = [
+    {
+      label: 'AM',
+      date: data_am,
+      state: data_am ? 'confirmed' : 'empty',
+    },
+    {
+      label: 'CM',
+      // Never overlap confirmed + predicted
+      date: data_cm ?? data_cm_prev,
+      state: data_cm ? 'confirmed' : data_cm_prev ? 'predicted' : 'empty',
+    },
+    {
+      label: 'MM',
+      date: data_mm ?? data_mm_prev,
+      state: data_mm ? 'confirmed' : data_mm_prev ? 'predicted' : 'empty',
+    },
+  ]
+
+  return (
+    <div className="flex items-center gap-1">
+      {nodes.map((node, i) => (
+        <div key={node.label} className="flex items-center gap-1">
+          <div className="flex flex-col items-center gap-0.5">
+            <NodeDot state={node.state} date={node.date} label={node.label} />
+            <span className="text-[10px] text-muted-foreground leading-none">{node.label}</span>
+          </div>
+          {i < nodes.length - 1 && (
+            <div className="w-4 h-px bg-muted-foreground/20 mb-3" />
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
