@@ -115,7 +115,7 @@ export async function registrarDeposito(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autorizado' }
 
-  if (!valor || valor <= 0) return { error: 'Valor deve ser maior que zero' }
+  if (!valor || valor === 0) return { error: 'Valor não pode ser zero' }
 
   const { error: depositError } = await supabase.from('lancamentos').insert({
     member_id: memberId,
@@ -149,7 +149,7 @@ export async function editarDeposito(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Não autorizado' }
 
-  if (!valor || valor <= 0) return { error: 'Valor deve ser maior que zero' }
+  if (!valor || valor === 0) return { error: 'Valor não pode ser zero' }
 
   const { error: updateError } = await supabase
     .from('lancamentos')

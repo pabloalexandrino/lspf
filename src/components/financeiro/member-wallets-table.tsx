@@ -5,6 +5,7 @@ import { Member, Caixa, LancamentoWithSessao } from '@/lib/types'
 import { WhatsAppButton } from '@/components/members/whatsapp-button'
 import { DepositoSheet } from './deposito-sheet'
 import { CobrancaSheet } from './cobranca-sheet'
+import { ExtratoSheet } from './extrato-sheet'
 import { formatCurrency } from '@/lib/utils'
 import { usarCreditoWallet } from '@/app/actions/financeiro'
 import { Button } from '@/components/ui/button'
@@ -13,7 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { toast } from 'sonner'
-import { CreditCard, PlusCircle, Wallet, Receipt } from 'lucide-react'
+import { CreditCard, PlusCircle, Wallet, Receipt, FileText } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
@@ -30,6 +31,7 @@ export function MemberWalletsTable({ members, caixas }: MemberWalletsTableProps)
   const router = useRouter()
   const [sheetMember, setSheetMember] = useState<MemberWithLancamentos | null>(null)
   const [depositoMember, setDepositoMember] = useState<MemberWithLancamentos | null>(null)
+  const [extratoMember, setExtratoMember] = useState<MemberWithLancamentos | null>(null)
   const [cobrancaOpen, setCobrancaOpen] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
@@ -147,6 +149,15 @@ export function MemberWalletsTable({ members, caixas }: MemberWalletsTableProps)
                       variant="outline"
                       size="sm"
                       className="text-xs"
+                      onClick={() => setExtratoMember(m)}
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      Extrato
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs"
                       onClick={() => setDepositoMember(m)}
                     >
                       <PlusCircle className="h-3 w-3 mr-1" />
@@ -179,6 +190,24 @@ export function MemberWalletsTable({ members, caixas }: MemberWalletsTableProps)
           depositos={(members.find((m) => m.id === depositoMember.id) ?? depositoMember).lancamentos.filter((l) => l.tipo === 'deposito').slice().reverse()}
           open={!!depositoMember}
           onOpenChange={(open) => { if (!open) setDepositoMember(null) }}
+        />
+      )}
+
+      {/* Extrato sheet */}
+      {extratoMember && (
+        <ExtratoSheet
+          member={extratoMember}
+          lancamentos={extratoMember.lancamentos.slice().sort((a, b) => {
+            // Sort oldest → newest using best available date
+            const toMs = (l: typeof a) => {
+              const raw = l.data_pagamento ?? l.sessao?.data ?? l.created_at
+              return new Date(raw.includes('T') ? raw : `${raw}T12:00:00`).getTime()
+            }
+            return toMs(a) - toMs(b)
+          })}
+          saldo={membersWithStats.find((m) => m.id === extratoMember.id)?.saldo ?? 0}
+          open={!!extratoMember}
+          onOpenChange={(open) => { if (!open) setExtratoMember(null) }}
         />
       )}
 

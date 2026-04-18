@@ -1,6 +1,6 @@
 # Project State
 
-**Updated:** 2026-03-27
+**Updated:** 2026-04-09
 
 ---
 
@@ -16,30 +16,31 @@
 
 ## Current Position
 
-**Status:** 3 features completas na sessão de hoje (27/03). Próxima: Saídas de Caixa (plano pronto, não executado).
+**Status:** Members Redesign (plano 2026-04-08) COMPLETO. Build passa sem erros.
 
 ---
 
 ## Recent Work
 
-### Sessão 2026-03-27 — WhatsApp Cobrança (COMPLETA)
-Todos os tasks do plano `docs/superpowers/plans/2026-03-27-whatsapp-cobranca.md` executados:
+### Sessão 2026-04-09 — Members Redesign (COMPLETA)
+Plano `docs/superpowers/plans/2026-04-08-members-redesign.md` — todas as 10 tasks executadas.
 
-- `1ec4636` add whatsapp column to members table
-- `6937200` add whatsapp field to Member type and memberSchema
-- `903bb96` add WhatsAppButton component with message generation
-- `bb89c56` add whatsapp field with mask to member form
-- `59dfb1b` add whatsapp button column to members table
-- `eabc041` add whatsapp button per member in sessao resumo financeiro
-- `dcec466` add whatsapp button column to member wallets table
-- `a574e52` fix: filter pending-only lancamentos before passing to WhatsAppButton
+Tasks 1-5 (sessão anterior): tipos, validações, actions, ProgressionTimeline, MemberForm
+Tasks 6-10 (esta sessão):
+- `e4115b0` / `25224b4` feat+fix: MembersFilters com grau/turma/cargo/cidade/status
+- `5f069b1` feat: MembersCards grid com borda colorida, timeline e badges
+- `a6f3e2a` / `6c3631a` feat+fix: MembersTable reescrita com novas colunas
+- `e044d2b` feat: MembersClient orquestrador com filtros URL-synced, toggle e sheets
+- `d9b241f` feat: page.tsx atualizada; fix em presenca-list, agape-list, resumo-financeiro, sessoes page para remover MemberWithCargos
+
+### Sessão 2026-03-27 — WhatsApp Cobrança (COMPLETA)
+Plano `docs/superpowers/plans/2026-03-27-whatsapp-cobranca.md`.
 
 ### Sessão 2026-03-27 — Cargos CRUD + Redesign Membros (COMPLETA)
-Plano `docs/superpowers/plans/2026-03-27-cargos-membros-redesign.md` executado (antes do whatsapp).
-Features: tabela `cargos`, tabela `member_cargos`, `CargoBadge`, `MemberDisplay`, página /cargos.
+Plano `docs/superpowers/plans/2026-03-27-cargos-membros-redesign.md`.
 
 ### Sessão 2026-03-26 — Multi-caixas / Wallets / Mensalidades (COMPLETA)
-Plano `docs/superpowers/plans/2026-03-26-multi-caixas-wallets.md` — 11 tasks completos.
+Plano `docs/superpowers/plans/2026-03-26-multi-caixas-wallets.md` — 11 tasks.
 
 ---
 
@@ -58,5 +59,5 @@ Nenhum blocker ativo.
 
 ## Session Continuity
 
-Last session: 2026-03-27
-Stopped at: WhatsApp Cobrança completa; próximo é Saídas de Caixa
+Last session: 2026-04-09
+Stopped at: Members Redesign concluído (build OK). Próximo: Saídas de Caixa ou PR para main.

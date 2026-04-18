@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Triangle } from 'lucide-react'
+import Image from 'next/image'
 
 type LoginState = { error?: string } | null
 
@@ -21,7 +21,7 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center space-y-2">
           <div className="flex justify-center">
-            <Triangle className="h-12 w-12 text-primary" strokeWidth={1.5} />
+            <Image src="/logo.png" alt="Logo" width={80} height={80} className="object-contain" />
           </div>
           <CardTitle className="text-2xl">Luz da Sabedoria, Prosperidade e Fraternidade</CardTitle>
           <CardDescription>Acesse sua conta</CardDescription>

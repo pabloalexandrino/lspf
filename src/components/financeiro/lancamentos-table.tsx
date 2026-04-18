@@ -101,8 +101,8 @@ export function LancamentosTable({ lancamentos, members, sessoes, caixas }: Lanc
 
   function valorClassName(l: LancamentoEnriched) {
     if (l.tipo === 'compensacao') return 'text-muted-foreground'
-    if (['deposito', 'oferta'].includes(l.tipo)) return 'text-green-500'
-    if (!l.pago && !l.compensado) return 'text-destructive'
+    if (Number(l.valor) > 0) return 'text-green-500'
+    if (Number(l.valor) < 0) return 'text-destructive'
     return ''
   }
 

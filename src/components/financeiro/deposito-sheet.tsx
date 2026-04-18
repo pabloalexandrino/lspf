@@ -64,7 +64,7 @@ export function DepositoSheet({ member, caixas, depositos, open, onOpenChange }:
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const valorNum = parseFloat(valor)
-    if (!valorNum || valorNum <= 0) {
+    if (!valorNum || valorNum === 0) {
       toast.error('Informe um valor válido')
       return
     }
@@ -98,7 +98,7 @@ export function DepositoSheet({ member, caixas, depositos, open, onOpenChange }:
       if (result?.error) {
         toast.error(result.error)
       } else {
-        toast.success(`Crédito de R$ ${valorNum.toFixed(2).replace('.', ',')} registrado para ${member.nome}`)
+        toast.success(`Depósito de R$ ${valorNum.toFixed(2).replace('.', ',')} registrado para ${member.nome}`)
         onOpenChange(false)
         resetForm()
         router.refresh()
@@ -181,7 +181,6 @@ export function DepositoSheet({ member, caixas, depositos, open, onOpenChange }:
                 id="dep-valor"
                 type="number"
                 step="0.01"
-                min="0.01"
                 placeholder="0,00"
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}

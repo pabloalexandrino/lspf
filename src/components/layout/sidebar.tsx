@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import {
   LayoutDashboard, Users, Calendar, DollarSign, Package,
-  ChevronLeft, ChevronRight, ChevronDown, Shield, Triangle,
+  ChevronLeft, ChevronRight, ChevronDown, Shield,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -44,9 +45,13 @@ export function Sidebar() {
         'flex items-center gap-3 border-b border-[hsl(var(--sidebar-border))] shrink-0',
         collapsed ? 'justify-center p-4' : 'px-4 py-[18px]'
       )}>
-        <div className="h-8 w-8 rounded-lg bg-primary/15 border border-primary/20 flex items-center justify-center shrink-0">
-          <Triangle className="h-[14px] w-[14px] text-primary" strokeWidth={2.5} />
-        </div>
+        <Image
+          src="/logo.png"
+          alt="Logo"
+          width={32}
+          height={32}
+          className={cn('object-contain shrink-0', collapsed ? 'h-8 w-8' : 'h-8 w-auto')}
+        />
         {!collapsed && (
           <div className="min-w-0 leading-none">
             <p className="text-[11px] font-bold text-primary tracking-wider">LSPF</p>
