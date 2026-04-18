@@ -1,6 +1,6 @@
 # Project State
 
-**Updated:** 2026-04-09
+**Updated:** 2026-04-18
 
 ---
 
@@ -16,37 +16,34 @@
 
 ## Current Position
 
-**Status:** Members Redesign (plano 2026-04-08) COMPLETO. Build passa sem erros.
+**Status:** Todos os planos pendentes COMPLETOS. Build passa sem erros. Pronto para PR.
 
 ---
 
 ## Recent Work
 
-### Sessão 2026-04-09 — Members Redesign (COMPLETA)
-Plano `docs/superpowers/plans/2026-04-08-members-redesign.md` — todas as 10 tasks executadas.
+### Sessão 2026-04-18 — Extrato Público + Saídas de Caixa (COMPLETA)
+Commit `5c40f96` — feature de extrato público por CIM + saídas de caixa + logo:
+- Página pública `/extrato` com busca por CIM (sem autenticação)
+- Página `/extrato/[memberId]` com ticket visual de saldo
+- `ExtratoSheet` + `ExtratoTicket` para visualização interna no dashboard
+- `SaidaCaixaSheet` + server actions `registrarSaida`/`excluirSaida`
+- `EntradaCaixaSheet` para registro de entradas manuais
+- `CaixasCards` atualizado: saldo correto, extrato colorido, botões de entrada/saída
+- Logo real substituindo ícone Triangle no Sidebar e LoginPage
+- `createServiceClient` (service role) para rotas públicas
 
-Tasks 1-5 (sessão anterior): tipos, validações, actions, ProgressionTimeline, MemberForm
-Tasks 6-10 (esta sessão):
-- `e4115b0` / `25224b4` feat+fix: MembersFilters com grau/turma/cargo/cidade/status
-- `5f069b1` feat: MembersCards grid com borda colorida, timeline e badges
-- `a6f3e2a` / `6c3631a` feat+fix: MembersTable reescrita com novas colunas
-- `e044d2b` feat: MembersClient orquestrador com filtros URL-synced, toggle e sheets
-- `d9b241f` feat: page.tsx atualizada; fix em presenca-list, agape-list, resumo-financeiro, sessoes page para remover MemberWithCargos
+### Sessão 2026-04-09 — Members Redesign (COMPLETA)
+Plano `docs/superpowers/plans/2026-04-08-members-redesign.md` — todas as 10 tasks.
 
 ### Sessão 2026-03-27 — WhatsApp Cobrança (COMPLETA)
-Plano `docs/superpowers/plans/2026-03-27-whatsapp-cobranca.md`.
-
 ### Sessão 2026-03-27 — Cargos CRUD + Redesign Membros (COMPLETA)
-Plano `docs/superpowers/plans/2026-03-27-cargos-membros-redesign.md`.
-
 ### Sessão 2026-03-26 — Multi-caixas / Wallets / Mensalidades (COMPLETA)
-Plano `docs/superpowers/plans/2026-03-26-multi-caixas-wallets.md` — 11 tasks.
 
 ---
 
 ## Pending Todos
 
-- [ ] Executar plano Saídas de Caixa (`docs/superpowers/plans/2026-03-27-saidas-caixa.md`)
 - [ ] Criar PR de master → main com todas as features completas
 
 ---
@@ -59,5 +56,5 @@ Nenhum blocker ativo.
 
 ## Session Continuity
 
-Last session: 2026-04-09
-Stopped at: Members Redesign concluído (build OK). Próximo: Saídas de Caixa ou PR para main.
+Last session: 2026-04-18
+Stopped at: Todos os planos executados. Próximo: PR master → main.
